@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Profile } from '@/lib/types'
+import CheckoutButton from './checkout-button'
+import PortalButton from './portal-button'
 
 export default async function BillingPage() {
   const supabase = await createClient()
@@ -29,7 +31,9 @@ export default async function BillingPage() {
           <p className="mt-2 text-sm text-green-700">
             Manage your subscription through the customer portal.
           </p>
-          {/* Stripe portal button will be added in Phase 3 */}
+          <div className="mt-4">
+            <PortalButton />
+          </div>
         </div>
       ) : (
         <div className="mt-6 rounded-lg border border-gray-200 bg-white p-8 text-center">
@@ -41,8 +45,9 @@ export default async function BillingPage() {
             <li>Daily AI-powered lead classification</li>
             <li>Dashboard with lead scoring</li>
           </ul>
-          {/* Stripe checkout button will be added in Phase 3 */}
-          <p className="mt-6 text-sm text-gray-400">Payment integration coming soon.</p>
+          <div className="mt-6">
+            <CheckoutButton />
+          </div>
         </div>
       )}
     </div>
