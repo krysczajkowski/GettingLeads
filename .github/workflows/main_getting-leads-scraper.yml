@@ -75,5 +75,5 @@ jobs:
         run: npm install -g azure-functions-core-tools@4 --unsafe-perm true
 
       - name: 'Deploy to Azure Functions'
-        run: cd deploy && func azure functionapp publish getting-leads-scraper
+        run: cd deploy && func azure functionapp publish getting-leads-scraper --javascript
           
