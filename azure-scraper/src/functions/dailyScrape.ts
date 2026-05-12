@@ -1,6 +1,6 @@
 import { app, InvocationContext, Timer } from '@azure/functions'
-import { getSupabase } from '../lib/supabase.js'
-import { fetchActiveUsers, processUser, PipelineResult } from '../lib/pipeline.js'
+import { getSupabase } from '../lib/supabase'
+import { fetchActiveUsers, processUser, PipelineResult } from '../lib/pipeline'
 
 async function dailyScrape(timer: Timer, context: InvocationContext): Promise<void> {
   if (timer.isPastDue) {

@@ -2,7 +2,7 @@
   "name": "getting-leads-scraper",
   "version": "0.1.0",
   "private": true,
-  "main": "dist/functions/dailyScrape.js",
+  "main": "dist/functions/*.js",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",

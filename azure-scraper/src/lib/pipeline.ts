@@ -5,8 +5,8 @@ import {
   pollUntilReady,
   downloadSnapshot,
   validateGroupUrl,
-} from './brightdata.js'
-import { classifyPost, rateLimitDelay } from './classifier.js'
+} from './brightdata'
+import { classifyPost, rateLimitDelay } from './classifier'
 
 const MONTHLY_POST_LIMIT = 5_000
 const MIN_CONTENT_LENGTH = 10
