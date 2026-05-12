@@ -11,7 +11,9 @@
 - Admin/webhook: `createAdminClient()` from `@/lib/supabase/admin` (service role, bypasses RLS)
 - API routes that write sensitive profile fields (stripe_customer_id, subscription_status) must use `createAdminClient()` — RLS blocks these writes via the server client
 - Mutations: Client Components calling browser Supabase client directly (no Server Actions)
-- Auth guard pattern: `supabase.auth.getUser()` → redirect if no user (per-page, not in layout)
+- Auth guard pattern: `supabase.auth.getUser()` → redirect if no user (per-page, and also in layout as defense-in-depth)
+- Proxy (`src/proxy.ts`): uses `getClaims()` for local JWT verification (no network call); `getUser()` is only in Server Components
+- `@supabase/ssr` v0.10.3+: `setAll(cookiesToSet, headers)` — second `headers` param must be forwarded to response in proxy, ignored in server client
 - Subscription gate: `profile.subscription_status !== 'active'` → redirect to `/billing` (per-page)
 - Next.js Link prefetch can trigger server-side redirects, causing infinite loops — don't render `<Link>` to gated pages for users who would be redirected
 
@@ -31,6 +33,7 @@
 - See `gdpr_rules.md` for full rules — these are non-negotiable constraints
 
 ## Gotchas
+- Next.js 16 renamed `middleware.ts` to `proxy.ts` (export `proxy` not `middleware`) — read `node_modules/next/dist/docs/` before touching it
 - Stripe SDK crashes `next build` if instantiated at module level without env vars — use lazy singleton (`getStripe()` in `src/lib/stripe.ts`)
 - Cookie-based auth + plain HTML form POSTs = CSRF vulnerable — use fetch-based Client Components for mutations to API routes
 - Always scope Supabase deletes to `user_id` for defense in depth (don't rely solely on RLS)

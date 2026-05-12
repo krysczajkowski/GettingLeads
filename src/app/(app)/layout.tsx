@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Profile } from '@/lib/types'
+import SignOutButton from './components/sign-out-button'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -33,14 +34,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           )}
           <NavLink href="/billing">Billing</NavLink>
         </nav>
-        <form action="/api/auth/signout" method="post" className="mt-8">
-          <button
-            type="submit"
-            className="text-sm text-gray-500 hover:text-gray-700"
-          >
-            Sign out
-          </button>
-        </form>
+        <div className="mt-8">
+          <SignOutButton />
+        </div>
       </aside>
       <main className="flex-1 p-8">{children}</main>
     </div>

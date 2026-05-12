@@ -12,34 +12,37 @@ export async function proxy(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet, headers) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
+          )
+          Object.entries(headers).forEach(([key, value]) =>
+            supabaseResponse.headers.set(key, value)
           )
         },
       },
     }
   )
 
-  // Must call getUser() immediately after createServerClient — do not add code between them
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // getClaims() verifies JWT locally — no network call for valid tokens.
+  // Triggers a refresh request only when the token is expired.
+  const { data } = await supabase.auth.getClaims()
+  const isAuthenticated = data !== null
 
   const pathname = request.nextUrl.pathname
 
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/callback')
   const isProtectedRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/settings') || pathname.startsWith('/billing')
 
-  if (!user && isProtectedRoute) {
+  if (!isAuthenticated && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  if (user && isAuthRoute) {
+  if (isAuthenticated && isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
