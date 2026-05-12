@@ -59,6 +59,11 @@ jobs:
         with:
           name: node-app
 
+      - name: Unzip artifact
+        run: |
+          mkdir deploy
+          unzip release.zip -d deploy
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -66,6 +71,9 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_DAAA817766C64D1985F2CD339E28C1B0 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_737BAB818D324F46A98D462408CD12F2 }}
 
+      - name: Install Azure Functions Core Tools
+        run: npm install -g azure-functions-core-tools@4 --unsafe-perm true
+
       - name: 'Deploy to Azure Functions'
-        run: az functionapp deployment source config-zip --resource-group GettingLeads-rg --name getting-leads-scraper --src release.zip --build-remote false
+        run: cd deploy && func azure functionapp publish getting-leads-scraper
           
