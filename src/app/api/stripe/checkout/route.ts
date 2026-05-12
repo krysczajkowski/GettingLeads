@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe'
 import { NextResponse } from 'next/server'
 import type { Profile } from '@/lib/types'
@@ -16,11 +17,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  const { data: profile } = await supabase
+  const admin = createAdminClient()
+
+  const { data: profile, error: profileError } = await admin
     .from('profiles')
     .select('stripe_customer_id')
     .eq('id', user.id)
-    .single<Pick<Profile, 'stripe_customer_id'>>()
+    .maybeSingle<Pick<Profile, 'stripe_customer_id'>>()
+
+  if (profileError) {
+    console.error('[checkout] profile read failed:', profileError.code, profileError.message)
+    return NextResponse.json({ error: 'Failed to initialize billing' }, { status: 500 })
+  }
 
   let customerId = profile?.stripe_customer_id
 
@@ -31,12 +39,13 @@ export async function POST(request: Request) {
     })
     customerId = customer.id
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await admin
       .from('profiles')
       .update({ stripe_customer_id: customerId })
       .eq('id', user.id)
 
     if (updateError) {
+      console.error('[checkout] admin update failed:', updateError.code, updateError.message)
       return NextResponse.json({ error: 'Failed to initialize billing' }, { status: 500 })
     }
   }

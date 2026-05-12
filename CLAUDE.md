@@ -9,9 +9,11 @@
 - Server Components: `await createClient()` from `@/lib/supabase/server`
 - Client Components: `createClient()` from `@/lib/supabase/client` (singleton)
 - Admin/webhook: `createAdminClient()` from `@/lib/supabase/admin` (service role, bypasses RLS)
+- API routes that write sensitive profile fields (stripe_customer_id, subscription_status) must use `createAdminClient()` — RLS blocks these writes via the server client
 - Mutations: Client Components calling browser Supabase client directly (no Server Actions)
 - Auth guard pattern: `supabase.auth.getUser()` → redirect if no user (per-page, not in layout)
 - Subscription gate: `profile.subscription_status !== 'active'` → redirect to `/billing` (per-page)
+- Next.js Link prefetch can trigger server-side redirects, causing infinite loops — don't render `<Link>` to gated pages for users who would be redirected
 
 ## Azure Scraper (`azure-scraper/`)
 - Separate TypeScript project with own `package.json` and `tsconfig.json` — not a monorepo
@@ -32,4 +34,10 @@
 - Stripe SDK crashes `next build` if instantiated at module level without env vars — use lazy singleton (`getStripe()` in `src/lib/stripe.ts`)
 - Cookie-based auth + plain HTML form POSTs = CSRF vulnerable — use fetch-based Client Components for mutations to API routes
 - Always scope Supabase deletes to `user_id` for defense in depth (don't rely solely on RLS)
+- Same for client-side reads — always add `.eq('user_id', ...)` even though RLS should filter
+- Validate URL protocol (http/https only) before rendering as `href` — scraped URLs like `post_url` could contain `javascript:` URIs
+- `supabase/migration.sql` must be run in Supabase SQL Editor before the app works — tables don't auto-create
+- pg_cron extension must be manually enabled in Supabase Dashboard before the cleanup job can be scheduled
+- Required env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`
+- Local Stripe webhook testing: `stripe listen --forward-to localhost:3000/api/stripe/webhook`
 - `azure-scraper/local.settings.json` is gitignored — holds secrets for local dev

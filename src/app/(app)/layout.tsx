@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import type { Profile } from '@/lib/types'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -11,13 +12,25 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!user) redirect('/login')
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('subscription_status')
+    .eq('id', user.id)
+    .single<Pick<Profile, 'subscription_status'>>()
+
+  const isActive = profile?.subscription_status === 'active'
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <aside className="w-56 border-r border-gray-200 bg-white p-4">
         <h2 className="mb-6 text-lg font-bold text-gray-900">GettingLeads</h2>
         <nav className="space-y-1">
-          <NavLink href="/dashboard">Dashboard</NavLink>
-          <NavLink href="/settings">Settings</NavLink>
+          {isActive && (
+            <>
+              <NavLink href="/dashboard">Dashboard</NavLink>
+              <NavLink href="/settings">Settings</NavLink>
+            </>
+          )}
           <NavLink href="/billing">Billing</NavLink>
         </nav>
         <form action="/api/auth/signout" method="post" className="mt-8">

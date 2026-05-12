@@ -144,8 +144,8 @@ create policy "Users can read own scrape logs"
 -- 6. Scheduled cleanup: delete expired leads daily at 2 AM UTC
 -- ============================================================
 -- Requires pg_cron extension (enabled by default on Supabase).
-select cron.schedule(
-  'delete-expired-leads',
-  '0 2 * * *',
-  $$delete from public.leads where expires_at < now()$$
-);
+-- select cron.schedule(
+--   'delete-expired-leads',
+--   '0 2 * * *',
+--   $$delete from public.leads where expires_at < now()$$
+-- );
