@@ -36,6 +36,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# azure functions
+azure-scraper/node_modules
+azure-scraper/dist
+azure-scraper/local.settings.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
