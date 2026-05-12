@@ -61,7 +61,7 @@ export async function triggerScrape(
   )
 
   if (!res.ok) {
-    throw new Error(`BrightData trigger failed: ${res.status}`)
+    throw new Error('BrightData trigger failed')
   }
 
   const data = await res.json()
@@ -85,15 +85,14 @@ export async function pollUntilReady(snapshotId: string): Promise<void> {
     })
 
     if (!res.ok) {
-      throw new Error(`BrightData poll failed: ${res.status}`)
+      throw new Error('BrightData poll failed')
     }
 
     const data = (await res.json()) as { status: string }
 
     if (data.status === 'ready') return
-    if (data.status === 'failed' || data.status === 'canceled') {
-      throw new Error(`BrightData snapshot ${data.status}`)
-    }
+    if (data.status === 'failed') throw new Error('BrightData snapshot failed')
+    if (data.status === 'canceled') throw new Error('BrightData snapshot canceled')
 
     await sleep(POLL_INTERVAL_MS)
   }
@@ -110,25 +109,40 @@ export async function downloadSnapshot(
   )
 
   if (!res.ok) {
-    throw new Error(`BrightData download failed: ${res.status}`)
+    throw new Error('BrightData download failed')
   }
 
   const data = await res.json()
   return sanitizePosts(data as Record<string, unknown>[])
 }
 
+function isFacebookUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'https:' && FACEBOOK_HOST_RE.test(parsed.hostname)
+  } catch {
+    return false
+  }
+}
+
 function sanitizePosts(rawPosts: Record<string, unknown>[]): ScrapedPost[] {
-  return rawPosts.map((p) => {
-    const content = String(p.content ?? '')
-    return {
-      url: String(p.url ?? ''),
-      group_url: String(p.group_url ?? ''),
-      content_hash: createHash('sha256').update(content).digest('hex'),
-      content_length: content.length,
-      date_posted: String(p.date_posted ?? ''),
-      content,
-    }
-  })
+  return rawPosts
+    .map((p) => {
+      const url = String(p.url ?? '')
+      const group_url = String(p.group_url ?? '')
+      if (!isFacebookUrl(url) || !isFacebookUrl(group_url)) return null
+
+      const content = String(p.content ?? '')
+      return {
+        url,
+        group_url,
+        content_hash: createHash('sha256').update(content).digest('hex'),
+        content_length: content.length,
+        date_posted: String(p.date_posted ?? ''),
+        content,
+      }
+    })
+    .filter((p): p is ScrapedPost => p !== null)
 }
 
 function sleep(ms: number): Promise<void> {

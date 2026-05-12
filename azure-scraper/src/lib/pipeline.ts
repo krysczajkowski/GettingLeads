@@ -156,40 +156,44 @@ async function classifyAndStore(
   let leadsInserted = 0
 
   for (const post of posts) {
-    const { content, ...postMeta } = post
-    const result = await classifyPost(content, brandName, brandDescription)
-    await rateLimitDelay()
+    try {
+      const { content, ...postMeta } = post
+      const result = await classifyPost(content, brandName, brandDescription)
+      await rateLimitDelay()
 
-    if (!result) continue
-    classified++
+      if (!result) continue
+      classified++
 
-    if (!result.match) continue
+      if (!result.match) continue
 
-    const isDuplicate = await checkDuplicate(supabase, userId, postMeta.content_hash)
-    if (isDuplicate) continue
+      const isDuplicate = await checkDuplicate(supabase, userId, postMeta.content_hash)
+      if (isDuplicate) continue
 
-    const now = new Date()
-    const expiresAt = new Date(now)
-    expiresAt.setUTCDate(expiresAt.getUTCDate() + retentionDays)
+      const now = new Date()
+      const expiresAt = new Date(now)
+      expiresAt.setUTCDate(expiresAt.getUTCDate() + retentionDays)
 
-    const { error } = await supabase.from('leads').insert({
-      user_id: userId,
-      post_url: postMeta.url,
-      source_url: postMeta.group_url,
-      score: result.score,
-      category: result.category,
-      reason_code: result.reason_code,
-      content_hash: postMeta.content_hash,
-      detected_at: now.toISOString(),
-      expires_at: expiresAt.toISOString(),
-    })
+      const { error } = await supabase.from('leads').insert({
+        user_id: userId,
+        post_url: postMeta.url,
+        source_url: postMeta.group_url,
+        score: result.score,
+        category: result.category,
+        reason_code: result.reason_code,
+        content_hash: postMeta.content_hash,
+        detected_at: now.toISOString(),
+        expires_at: expiresAt.toISOString(),
+      })
 
-    if (error) {
-      if (error.code === '23505') continue
-      throw new Error(`Failed to insert lead`)
+      if (error) {
+        if (error.code === '23505') continue
+        continue
+      }
+
+      leadsInserted++
+    } catch {
+      continue
     }
-
-    leadsInserted++
   }
 
   return { classified, leadsInserted }
@@ -253,7 +257,7 @@ async function getUsage(
     .select('posts_processed')
     .eq('user_id', userId)
     .eq('month', month)
-    .single()
+    .maybeSingle()
 
   return data?.posts_processed ?? 0
 }

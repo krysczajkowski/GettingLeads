@@ -16,10 +16,17 @@ function getApiKey(): string {
   return key
 }
 
+function sanitizePromptInput(value: string, maxLength: number): string {
+  return value.slice(0, maxLength).replace(/[\r\n]+/g, ' ')
+}
+
 function buildSystemPrompt(brandName: string, brandDescription: string): string {
+  const safeName = sanitizePromptInput(brandName, 100)
+  const safeDescription = sanitizePromptInput(brandDescription, 200)
+
   return [
-    `You are a lead classifier for the brand "${brandName}".`,
-    brandDescription ? `Brand description: ${brandDescription}` : '',
+    `You are a lead classifier for the brand "${safeName}".`,
+    safeDescription ? `Brand description: ${safeDescription}` : '',
     'Classify whether the following Facebook post indicates a potential lead for this brand.',
     'Return JSON only: {"match": boolean, "score": number, "category": string, "reason_code": string}.',
     'score is 0.0-1.0. category examples: buying_intent, recommendation_request, problem_report, comparison_shopping.',
@@ -74,14 +81,14 @@ const MAX_FIELD_LENGTH = 64
 function validateResult(raw: Record<string, unknown>): ClassificationResult | null {
   if (typeof raw.match !== 'boolean') return null
   if (typeof raw.score !== 'number' || raw.score < 0 || raw.score > 1) return null
-  if (typeof raw.category !== 'string' || raw.category.length === 0 || raw.category.length > MAX_FIELD_LENGTH) return null
-  if (typeof raw.reason_code !== 'string' || raw.reason_code.length === 0 || raw.reason_code.length > MAX_FIELD_LENGTH) return null
+  if (typeof raw.category !== 'string' || raw.category.length === 0) return null
+  if (typeof raw.reason_code !== 'string' || raw.reason_code.length === 0) return null
 
   return {
     match: raw.match,
     score: raw.score,
-    category: raw.category,
-    reason_code: raw.reason_code,
+    category: raw.category.slice(0, MAX_FIELD_LENGTH),
+    reason_code: raw.reason_code.slice(0, MAX_FIELD_LENGTH),
   }
 }
 
