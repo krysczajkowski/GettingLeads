@@ -149,3 +149,24 @@ create policy "Users can read own scrape logs"
 --   '0 2 * * *',
 --   $$delete from public.leads where expires_at < now()$$
 -- );
+
+-- ============================================================
+-- 7. Per-user scrape scheduling
+-- ============================================================
+alter table public.profiles
+  add column if not exists scrape_hour integer not null default 6,
+  add column if not exists scrape_timezone text not null default 'UTC',
+  add column if not exists scrape_frequency text not null default 'daily',
+  add column if not exists next_scrape_at timestamptz,
+  add column if not exists scrape_lock_until timestamptz;
+
+-- Back-fill existing users: set to now() so the scheduler picks them up
+-- on the next tick and computes the correct timezone-aware next_scrape_at.
+update public.profiles
+set next_scrape_at = now()
+where next_scrape_at is null;
+
+-- Partial index for the scheduler's polling query.
+create index if not exists idx_profiles_next_scrape
+  on public.profiles (next_scrape_at)
+  where subscription_status = 'active';

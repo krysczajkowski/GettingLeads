@@ -11,7 +11,7 @@ import { classifyPost, rateLimitDelay } from './classifier'
 const MONTHLY_POST_LIMIT = 5_000
 const MIN_CONTENT_LENGTH = 10
 
-type UserWithGroups = {
+export type UserWithGroups = {
   userId: string
   brandName: string | null
   brandDescription: string | null
@@ -327,17 +327,10 @@ function getYesterday(): string {
   return d.toISOString().slice(0, 10)
 }
 
-export async function fetchActiveUsers(
+async function resolveGroups(
   supabase: SupabaseClient,
+  profiles: { id: string; brand_name: string | null; brand_description: string | null; retention_days: number }[],
 ): Promise<UserWithGroups[]> {
-  const { data: profiles, error } = await supabase
-    .from('profiles')
-    .select('id, brand_name, brand_description, retention_days')
-    .eq('subscription_status', 'active')
-
-  if (error) throw new Error(`Failed to fetch profiles`)
-  if (!profiles || profiles.length === 0) return []
-
   const users: UserWithGroups[] = []
 
   for (const profile of profiles) {
@@ -363,4 +356,44 @@ export async function fetchActiveUsers(
   }
 
   return users
+}
+
+export async function fetchActiveUsers(
+  supabase: SupabaseClient,
+): Promise<UserWithGroups[]> {
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('id, brand_name, brand_description, retention_days')
+    .eq('subscription_status', 'active')
+
+  if (error) throw new Error(`Failed to fetch profiles`)
+  return resolveGroups(supabase, profiles ?? [])
+}
+
+export async function fetchDueUsers(
+  supabase: SupabaseClient,
+): Promise<(UserWithGroups & { scrapeHour: number; scrapeTimezone: string; scrapeFrequency: string })[]> {
+  const now = new Date().toISOString()
+
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('id, brand_name, brand_description, retention_days, scrape_hour, scrape_timezone, scrape_frequency')
+    .eq('subscription_status', 'active')
+    .lte('next_scrape_at', now)
+    .or(`scrape_lock_until.is.null,scrape_lock_until.lt.${now}`)
+
+  if (error) throw new Error(`Failed to fetch profiles`)
+  if (!profiles || profiles.length === 0) return []
+
+  const users = await resolveGroups(supabase, profiles)
+
+  return users.map((user) => {
+    const profile = profiles.find((p) => p.id === user.userId)!
+    return {
+      ...user,
+      scrapeHour: profile.scrape_hour,
+      scrapeTimezone: profile.scrape_timezone,
+      scrapeFrequency: profile.scrape_frequency,
+    }
+  })
 }
