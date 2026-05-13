@@ -75,42 +75,27 @@ Azure Functions v4 Node.js project that scrapes Facebook groups for leads. Uses 
 - Do NOT use `module: "nodenext"` — Azure Functions worker fails to load entry points compiled under nodenext
 - Do NOT add `.js` extensions to imports — CJS resolution doesn't need them
 
-## Deployment (UNRESOLVED — as of 2026-05-12)
+## Deployment
 
 ### Infrastructure
 - **Function App:** `getting-leads-scraper` in resource group `GettingLeads-rg`
 - **Storage:** `gettingleadsstorage`
 - **Region:** westeurope
 - **Plan:** Linux Consumption
-- **Runtime:** Node 24, Functions v4
+- **Runtime:** Node 22 LTS, Functions v4
 - **Auth:** OIDC / User-assigned identity (RBAC)
 
-### The Deployment Problem
-Deploy fails at "Sync Trigger" with: *"Failed to perform sync trigger on function app. Function app may have malformed content."*
-
-Build always succeeds. The code uploads successfully. Azure cannot start the function runtime afterward.
-
-### What Has Been Tried (all failed)
-1. `Azure/functions-action@v1` — forces `WEBSITE_RUN_FROM_PACKAGE` on RBAC + Linux Consumption, sync trigger fails (known bug: [Azure/functions-action#147](https://github.com/Azure/functions-action/issues/147))
-2. `Azure/functions-action@v1` with `scm-do-build-during-deployment: 'false'` + `enable-oryx-build: 'false'` — same sync trigger failure
-3. `az functionapp deployment source config-zip` — returns 503 (SCM/Kudu unavailable on Linux Consumption)
-4. `func azure functionapp publish --javascript` — current approach, pending test results
-5. Glob `"main": "dist/functions/*.js"` — can silently match zero files ([azure-functions-nodejs-library#119](https://github.com/Azure/azure-functions-nodejs-library/issues/119))
-6. Changed tsconfig from `nodenext` to `commonjs` — fixed build issues but didn't fix deploy
-7. `npm prune --production` before zip, excluded `src/` from artifact — reduced size but didn't fix deploy
-
-### Likely Root Causes (not yet confirmed)
-- RBAC + Linux Consumption combination is buggy for the functions-action
-- Azure runtime may fail to cold-start with the deployed package (Node 24 compatibility? dependency issue?)
-- Setting `FUNCTIONS_NODE_BLOCK_ON_ENTRY_POINT_ERROR=true` in Function App env vars would surface the real error
-
-### What to Try Next
-- Check `func azure functionapp publish --javascript` results (current CI approach)
-- If that fails: switch from OIDC to publish profile auth
-- If that fails: deploy locally with `func azure functionapp publish` to see actual runtime errors
-- Consider whether Node 24 is properly supported by `@azure/functions` v4
+### CI/CD
+- GitHub Actions workflow: `.github/workflows/main_getting-leads-scraper.yml`
+- Deploys via `func azure functionapp publish --javascript` (not `Azure/functions-action`)
+- Build step must `rm -rf dist` before `tsc` — TypeScript compiler doesn't clean stale outputs
+- `npm prune --production` before zipping excludes devDependencies
+- Artifact excludes `src/`, `tsconfig.json`, `.git/`
 
 ### Environment Variables (set in Azure Portal)
-`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `BRIGHTDATA_API_KEY`, `OPENAI_API_KEY`
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `BRIGHTDATA_API_KEY`, `OPENAI_API_KEY`, `FUNCTIONS_NODE_BLOCK_ON_ENTRY_POINT_ERROR=true`
 
-Add `FUNCTIONS_NODE_BLOCK_ON_ENTRY_POINT_ERROR=true` to get real error messages instead of "malformed content."
+### Gotchas
+- Azure Functions v4 supports Node 18, 20, 22 — not Node 24 (sync triggers fail silently)
+- Node version must match between workflow `NODE_VERSION` and Azure Portal Stack Settings
+- `Azure/functions-action@v1` doesn't work with RBAC + Linux Consumption (use `func` CLI instead)

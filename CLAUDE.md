@@ -54,3 +54,4 @@
 - Local Azure Functions testing requires Azurite: `npx azurite --silent --location .azurite`
 - `computeNextScrapeAt` handles half-hour timezones (Asia/Kolkata UTC+5:30) — uses minute-precision offset calculation
 - Never show Supabase `error.message` to users in Client Components — use generic error strings (GDPR)
+- `tsc` doesn't delete stale files from `dist/` — always `rm -rf dist` before building azure-scraper (the `prebuild` script handles this)
