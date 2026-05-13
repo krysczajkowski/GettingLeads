@@ -66,7 +66,7 @@ export default function GroupList({ groups }: { groups: Group[] }) {
     })
 
     if (insertError) {
-      setError(insertError.message)
+      setError('Failed to add group. Please try again.')
       setAdding(false)
       return
     }
@@ -98,7 +98,7 @@ export default function GroupList({ groups }: { groups: Group[] }) {
       .eq('user_id', user.id)
 
     if (deleteError) {
-      setError(deleteError.message)
+      setError('Failed to remove group. Please try again.')
       setDeletingId(null)
       return
     }

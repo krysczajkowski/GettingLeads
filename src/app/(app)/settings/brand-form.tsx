@@ -44,7 +44,7 @@ export default function BrandForm({
       .eq('id', user.id)
 
     if (updateError) {
-      setError(updateError.message)
+      setError('Failed to save brand settings. Please try again.')
       setSaving(false)
       return
     }

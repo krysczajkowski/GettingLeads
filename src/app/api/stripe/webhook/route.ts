@@ -28,7 +28,7 @@ async function updateSubscription(
     .update(fields)
     .eq('stripe_customer_id', customerId)
 
-  if (error) throw new Error(`Supabase update failed: ${error.message}`)
+  if (error) throw new Error(`Supabase update failed: ${error.code}`)
 }
 
 export async function POST(request: Request) {
