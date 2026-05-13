@@ -4,6 +4,8 @@
   "private": true,
   "main": "dist/index.js",
   "scripts": {
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
     "build": "tsc",
     "watch": "tsc -w",
     "start": "func start",
