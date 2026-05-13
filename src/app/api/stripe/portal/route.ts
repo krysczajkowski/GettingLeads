@@ -1,7 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/stripe'
+import { rateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import type { Profile } from '@/lib/types'
+
+const MAX_REQUESTS = 10
+const WINDOW_MS = 60 * 60 * 1000
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -13,6 +17,10 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  }
+
+  if (!rateLimit(`portal:${user.id}`, MAX_REQUESTS, WINDOW_MS)) {
+    return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
   }
 
   const { data: profile } = await supabase

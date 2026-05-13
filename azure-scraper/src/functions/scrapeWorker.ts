@@ -3,13 +3,30 @@ import { getSupabase } from '../lib/supabase'
 import { processUser } from '../lib/pipeline'
 import { ScrapeMessage } from '../lib/schedule'
 
-async function scrapeWorker(message: unknown, context: InvocationContext): Promise<void> {
-  const msg = message as ScrapeMessage
+function isValidMessage(msg: unknown): msg is ScrapeMessage {
+  if (typeof msg !== 'object' || msg === null) return false
+  const m = msg as Record<string, unknown>
+  return (
+    typeof m.userId === 'string' &&
+    m.userId.length > 0 &&
+    (m.brandName === null || typeof m.brandName === 'string') &&
+    (m.brandDescription === null || typeof m.brandDescription === 'string') &&
+    typeof m.retentionDays === 'number' &&
+    Array.isArray(m.groups) &&
+    m.groups.every((g) => typeof g === 'object' && g !== null && typeof (g as Record<string, unknown>).url === 'string') &&
+    typeof m.scrapeHour === 'number' &&
+    typeof m.scrapeTimezone === 'string' &&
+    typeof m.scrapeFrequency === 'string'
+  )
+}
 
-  if (!msg.userId || !Array.isArray(msg.groups)) {
+async function scrapeWorker(message: unknown, context: InvocationContext): Promise<void> {
+  if (!isValidMessage(message)) {
     context.error('Worker: invalid queue message')
     return
   }
+
+  const msg = message
 
   context.log(`Worker: processing user ${msg.userId} (${msg.groups.length} groups)`)
 
