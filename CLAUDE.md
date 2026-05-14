@@ -10,6 +10,7 @@
 - Client Components: `createClient()` from `@/lib/supabase/client` (singleton)
 - Admin/webhook: `createAdminClient()` from `@/lib/supabase/admin` (service role, bypasses RLS)
 - API routes that write sensitive profile fields (stripe_customer_id, subscription_status) must use `createAdminClient()` — RLS blocks these writes via the server client
+- Rate limiting: `rateLimit(key, maxRequests, windowMs)` from `@/lib/rate-limit.ts` — in-memory, used on Stripe API routes
 - Mutations: Client Components calling browser Supabase client directly (no Server Actions)
 - Auth guard pattern: `supabase.auth.getUser()` → redirect if no user (per-page, and also in layout as defense-in-depth)
 - Proxy (`src/proxy.ts`): uses `getClaims()` for local JWT verification (no network call); `getUser()` is only in Server Components
@@ -53,5 +54,7 @@
 - Azure Storage Queue `scrape-jobs` must exist in `gettingleadsstorage` (runtime usually auto-creates on first deploy)
 - Local Azure Functions testing requires Azurite: `npx azurite --silent --location .azurite`
 - `computeNextScrapeAt` handles half-hour timezones (Asia/Kolkata UTC+5:30) — uses minute-precision offset calculation
-- Never show Supabase `error.message` to users in Client Components — use generic error strings (GDPR)
+- Never show Supabase `error.message` to users in Client Components — use generic error strings (GDPR). This includes auth errors (login/signup) to prevent user enumeration
+- Never log raw Supabase `error.message` server-side either — log `error.code` only
+- Security headers (X-Frame-Options, HSTS, etc.) are configured in `next.config.ts` `headers()` — don't remove
 - `tsc` doesn't delete stale files from `dist/` — always `rm -rf dist` before building azure-scraper (the `prebuild` script handles this)

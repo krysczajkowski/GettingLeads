@@ -52,6 +52,7 @@ Azure Functions v4 Node.js project that scrapes Facebook groups for leads. Uses 
 - Error handling: error codes only in logs/DB, never interpolate `error.message` (GDPR)
 - `.maybeSingle()` not `.single()` for existence checks (avoids PGRST116)
 - GPT classification outputs capped at 64 chars per field to prevent content leakage
+- Queue messages validated with `isValidMessage()` type guard in `scrapeWorker.ts` — reject malformed messages before processing
 - Imports use no `.js` extensions (CommonJS module resolution)
 
 ## GDPR Constraints (non-negotiable)
