@@ -11,6 +11,8 @@
 - `src/app/components/nav.tsx` is the only client component in the landing page shell (hamburger menu state)
 - App shell (`(app)/layout.tsx`) is responsive — sidebar hidden below `md:`, mobile top bar nav via `(app)/components/mobile-nav.tsx`
 - App shell breakpoint strategy differs from landing page: sidebar (232px) reduces content width, so dashboard dense layouts (stat grid, table columns) use `xl:` (1280px) not `md:`
+- Auth pages (`(auth)/login`, `(auth)/signup`) use split-screen layout — form left, branded aside right; shared components `auth-aside.tsx` and `auth-icons.tsx` live in `(auth)/`; breakpoint is `min-[961px]` (960px), different from both landing and dashboard
+- Custom checkbox checkmark (`.auth-check-input` in `globals.css`) needed because Tailwind `appearance-none` removes native checkbox styling — can't do the `:checked::after` pseudo-element with utility classes alone
 - Server Components: `await createClient()` from `@/lib/supabase/server`
 - Client Components: `createClient()` from `@/lib/supabase/client` (singleton)
 - Admin/webhook: `createAdminClient()` from `@/lib/supabase/admin` (service role, bypasses RLS)

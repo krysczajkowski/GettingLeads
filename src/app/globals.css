@@ -110,6 +110,29 @@
   100% { background-position: 200% 0; }
 }
 
+@keyframes auth-ping {
+  0%   { transform: scale(0.6); box-shadow: 0 0 0 0 rgba(21,179,108,0.55); }
+  70%  { box-shadow: 0 0 0 18px rgba(21,179,108,0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(21,179,108,0); }
+}
+
+/* Auth checkbox checkmark */
+.auth-check-input {
+  appearance: none;
+  position: relative;
+}
+.auth-check-input:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
 /* Utility: eyebrow label */
 .eyebrow {
   font-family: var(--font-geist-mono);
