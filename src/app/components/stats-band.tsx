@@ -13,13 +13,13 @@ export default function StatsBand() {
   return (
     <section className="border-t border-line-1 py-20">
       <div className="mx-auto max-w-[1280px] px-6">
-        <div className="grid grid-cols-4 overflow-hidden rounded-[16px] border border-line-1 bg-white">
+        <div className="grid grid-cols-2 overflow-hidden rounded-[16px] border border-line-1 bg-white md:grid-cols-4">
           {stats.map((s, i) => (
             <div
               key={i}
-              className={`flex flex-col gap-1 px-7 py-8 ${i < 3 ? 'border-r border-line-1' : ''}`}
+              className={`flex flex-col gap-1 px-5 py-6 md:px-7 md:py-8 ${i % 2 === 0 ? 'border-r border-line-1' : ''} ${i < 2 ? 'border-b border-line-1 md:border-b-0' : ''} ${i % 2 !== 0 && i < 3 ? 'md:border-r' : ''}`}
             >
-              <div className="text-[44px] font-semibold leading-none tracking-[-0.025em] text-ink-1000">
+              <div className="text-[32px] font-semibold leading-none tracking-[-0.025em] text-ink-1000 md:text-[44px]">
                 <NumTicker to={s.num} format={s.format} />
                 {s.suffix && <span>{s.suffix}</span>}
               </div>

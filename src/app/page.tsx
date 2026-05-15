@@ -4,6 +4,7 @@ import HeroFeed from './components/hero-feed'
 import TrustMarquee from './components/trust-marquee'
 import HowItWorks from './components/how-it-works'
 import StatsBand from './components/stats-band'
+import Nav from './components/nav'
 
 const ArrowRight = () => (
   <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -17,30 +18,10 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       {/* ===== Sticky nav ===== */}
-      <nav className="sticky top-0 z-50 h-16 border-b border-line-1 bg-white/72 backdrop-blur-[14px]">
-        <div className="mx-auto flex h-full max-w-[1280px] items-center justify-between px-6">
-          <div className="flex items-center gap-9">
-            <a href="#" className="flex items-center gap-2.5 text-[17px] font-semibold tracking-[-0.02em] text-ink-1000 no-underline">
-              <GLLogo size={26} />
-              GettingLeads
-            </a>
-            <div className="flex gap-7">
-              <a href="#product" className="text-[14px] text-ink-700 no-underline transition-colors duration-[200ms] hover:text-ink-1000">Product</a>
-              <a href="#how" className="text-[14px] text-ink-700 no-underline transition-colors duration-[200ms] hover:text-ink-1000">How it works</a>
-              <a href="#pricing" className="text-[14px] text-ink-700 no-underline transition-colors duration-[200ms] hover:text-ink-1000">Pricing</a>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/login" className="inline-flex h-9 items-center rounded-[6px] px-3.5 text-[13px] font-medium text-ink-700 transition-all duration-[200ms] hover:bg-surface-2 hover:text-ink-1000">Sign in</Link>
-            <Link href="/signup" className="inline-flex h-9 items-center gap-2 rounded-[6px] bg-brand px-3.5 text-[13px] font-medium text-fg-on-brand shadow-[0_1px_0_rgba(11,15,14,0.06),0_6px_14px_-4px_rgba(21,179,108,0.4)] transition-all duration-[200ms] hover:-translate-y-px hover:bg-brand-hover">
-              Start free trial <ArrowRight />
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <Nav />
 
       {/* ===== Hero ===== */}
-      <header className="relative overflow-hidden py-24 pb-[120px]">
+      <header className="relative overflow-hidden py-12 pb-16 md:py-24 md:pb-[120px]">
         {/* Dotted grid background */}
         <div
           className="pointer-events-none absolute inset-0 z-0"
@@ -51,7 +32,7 @@ export default function HomePage() {
             WebkitMaskImage: 'radial-gradient(ellipse at 50% 0%, black 30%, transparent 80%)',
           }}
         />
-        <div className="relative z-10 mx-auto grid max-w-[1280px] grid-cols-[1.05fr_1fr] items-center gap-16 px-6">
+        <div className="relative z-10 mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-10 px-6 md:grid-cols-[1.05fr_1fr] md:gap-16">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-line-1 bg-surface-1 px-2.5 py-1.5 font-mono text-[12px] font-medium uppercase tracking-[0.08em] text-ink-600">
               <span className="relative h-1.5 w-1.5 rounded-full bg-brand">
@@ -66,21 +47,21 @@ export default function HomePage() {
             <p className="mt-[18px] max-w-[520px] text-[19px] leading-relaxed text-ink-700">
               GettingLeads monitors public groups around the clock, scores every post against your buyer, and delivers the ones worth replying to — straight to your inbox.
             </p>
-            <div className="mt-7 flex items-center gap-2.5">
-              <Link href="/signup" className="inline-flex h-[52px] items-center gap-2 rounded-[10px] bg-brand px-[22px] text-[15px] font-medium text-fg-on-brand shadow-[0_1px_0_rgba(11,15,14,0.06),0_6px_14px_-4px_rgba(21,179,108,0.4)] transition-all duration-[200ms] hover:-translate-y-px hover:bg-brand-hover hover:shadow-[0_1px_0_rgba(11,15,14,0.06),0_10px_20px_-4px_rgba(21,179,108,0.5)] active:translate-y-0 active:scale-[0.985]">
+            <div className="mt-7 flex flex-col gap-2.5 sm:flex-row sm:items-center">
+              <Link href="/signup" className="inline-flex h-[52px] items-center justify-center gap-2 rounded-[10px] bg-brand px-[22px] text-[15px] font-medium text-fg-on-brand shadow-[0_1px_0_rgba(11,15,14,0.06),0_6px_14px_-4px_rgba(21,179,108,0.4)] transition-all duration-[200ms] hover:-translate-y-px hover:bg-brand-hover hover:shadow-[0_1px_0_rgba(11,15,14,0.06),0_10px_20px_-4px_rgba(21,179,108,0.5)] active:translate-y-0 active:scale-[0.985]">
                 Start free 14-day trial <ArrowRight />
               </Link>
-              <a href="#product" className="inline-flex h-[52px] items-center rounded-[10px] border border-line-2 bg-white px-[22px] text-[15px] font-medium text-ink-1000 transition-all duration-[200ms] hover:border-line-3 hover:bg-surface-1">
+              <a href="#product" className="inline-flex h-[52px] items-center justify-center rounded-[10px] border border-line-2 bg-white px-[22px] text-[15px] font-medium text-ink-1000 transition-all duration-[200ms] hover:border-line-3 hover:bg-surface-1">
                 See a live demo
               </a>
             </div>
-            <div className="mt-[18px] flex items-center gap-3.5 font-mono text-[12px] text-ink-500">
+            <div className="mt-[18px] flex flex-wrap items-center gap-x-3.5 gap-y-1 font-mono text-[12px] text-ink-500">
               <span className="inline-flex items-center gap-1.5"><span className="text-brand"><Check /></span> No credit card</span>
               <span className="inline-flex items-center gap-1.5"><span className="text-brand"><Check /></span> Setup in 3 minutes</span>
               <span className="inline-flex items-center gap-1.5"><span className="text-brand"><Check /></span> Cancel any time</span>
             </div>
           </div>
-          <div>
+          <div className="hidden md:block">
             <HeroFeed />
           </div>
         </div>
@@ -93,9 +74,9 @@ export default function HomePage() {
       <HowItWorks />
 
       {/* ===== Dashboard preview ===== */}
-      <section className="border-t border-line-1 py-[120px]" id="product">
+      <section className="border-t border-line-1 py-16 md:py-[120px]" id="product">
         <div className="mx-auto max-w-[1280px] px-6">
-          <div className="mx-auto mb-20 max-w-[720px] text-center">
+          <div className="mx-auto mb-10 max-w-[720px] text-center md:mb-20">
             <span className="mb-[18px] inline-flex items-center gap-2 rounded-full border border-line-1 bg-surface-1 px-2.5 py-1.5 font-mono text-[12px] font-medium uppercase tracking-[0.08em] text-ink-600">
               <span className="relative h-1.5 w-1.5 rounded-full bg-brand">
                 <span className="absolute -inset-[3px] animate-[gl-pulse-dot_1.6s_ease-in-out_infinite] rounded-full bg-brand opacity-40" />
@@ -115,11 +96,11 @@ export default function HomePage() {
             <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-[16px]">
               <div className="absolute left-0 top-0 h-full w-[30%] animate-[gl-scan-line_4s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-brand/[0.12] to-transparent" />
             </div>
-            <div className="overflow-hidden rounded-[10px] border border-line-1 bg-white">
+            <div className="rounded-[10px] border border-line-1 bg-white">
               {/* Mini dashboard mockup */}
-              <div className="grid grid-cols-[170px_1fr]" style={{ height: 420 }}>
+              <div className="md:grid md:grid-cols-[170px_1fr] md:h-[420px]">
                 {/* Sidebar */}
-                <aside className="flex flex-col border-r border-line-1 bg-white p-3.5">
+                <aside className="hidden flex-col border-r border-line-1 bg-white p-3.5 md:flex">
                   <div className="mb-3.5 flex items-center gap-2 px-1">
                     <GLLogo size={18} />
                     <span className="text-[13px] font-semibold tracking-[-0.01em]">GettingLeads</span>
@@ -155,14 +136,14 @@ export default function HomePage() {
                     <div className="mt-0.5 text-[22px] font-semibold tracking-[-0.025em] text-ink-1000">Dashboard</div>
                   </div>
                   {/* Mini stat strip */}
-                  <div className="mb-2.5 grid grid-cols-4 overflow-hidden rounded-[8px] border border-line-1 bg-white shadow-card">
+                  <div className="mb-2.5 grid grid-cols-2 overflow-hidden rounded-[8px] border border-line-1 bg-white shadow-card md:grid-cols-4">
                     {[
                       { label: 'Total leads', value: '6', delta: '+2 today' },
                       { label: 'Avg score', value: '96%', delta: '+4 pts' },
                       { label: 'Buying intent', value: '100%', delta: 'Stable' },
                       { label: 'Top group', value: 'Apartments PL', delta: '6 leads' },
                     ].map((s, i) => (
-                      <div key={i} className={`flex flex-col gap-1 px-4 py-3.5 ${i < 3 ? 'border-r border-line-1' : ''}`}>
+                      <div key={i} className={`flex flex-col gap-1 px-4 py-3.5 ${i >= 2 ? 'hidden md:flex' : ''} ${i === 0 ? 'border-r border-line-1' : ''} ${i === 1 || i === 2 ? 'border-line-1 md:border-r' : ''}`}>
                         <span className="font-mono text-[9.5px] uppercase tracking-[0.06em] text-ink-500">{s.label}</span>
                         <span className="text-[20px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-ink-1000">{s.value}</span>
                         <span className="font-mono text-[10px] text-brand">{s.delta}</span>
@@ -234,9 +215,9 @@ export default function HomePage() {
       </section>
 
       {/* ===== Features ===== */}
-      <section className="border-t border-line-1 py-[120px]">
+      <section className="border-t border-line-1 py-16 md:py-[120px]">
         <div className="mx-auto max-w-[1280px] px-6">
-          <div className="mx-auto mb-20 max-w-[720px] text-center">
+          <div className="mx-auto mb-10 max-w-[720px] text-center md:mb-20">
             <span className="mb-[18px] inline-flex items-center gap-2 rounded-full border border-line-1 bg-surface-1 px-2.5 py-1.5 font-mono text-[12px] font-medium uppercase tracking-[0.08em] text-ink-600">
               <span className="relative h-1.5 w-1.5 rounded-full bg-brand">
                 <span className="absolute -inset-[3px] animate-[gl-pulse-dot_1.6s_ease-in-out_infinite] rounded-full bg-brand opacity-40" />
@@ -250,7 +231,7 @@ export default function HomePage() {
               No dashboards inside dashboards. No 14 nested menus. The features below are roughly all of them — by design.
             </p>
           </div>
-          <div className="grid grid-cols-3 overflow-hidden rounded-[16px] border border-line-1 bg-white">
+          <div className="grid grid-cols-1 overflow-hidden rounded-[16px] border border-line-1 bg-white md:grid-cols-3">
             {[
               { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>, title: 'Buyer-fit scoring', desc: 'A single paragraph describing your brand powers every score. Tune it; the model adapts.' },
               { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8"/></svg>, title: 'Category & reason', desc: 'Every match is tagged with the category and why it triggered. No guessing.' },
@@ -259,7 +240,7 @@ export default function HomePage() {
               { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="4"/><path d="M1 21a8 8 0 0 1 16 0"/><path d="M17 4a4 4 0 0 1 0 8"/><path d="M23 21a8 8 0 0 0-4-7"/></svg>, title: 'Up to 10 groups', desc: 'Add public Facebook group URLs to your watchlist. Add, remove, or swap them out any time from Settings.' },
               { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg>, title: 'Jump to the post', desc: 'One click on any scored lead opens the original Facebook post in a new tab. Reply where they are.' },
             ].map((it, i) => (
-              <div key={i} className={`p-8 ${i % 3 !== 2 ? 'border-r border-line-1' : ''} ${i < 3 ? 'border-b border-line-1' : ''}`}>
+              <div key={i} className={`p-5 md:p-8 ${i < 3 ? 'hidden md:block' : ''} ${i < 5 ? 'border-b border-line-1' : ''} ${i >= 3 ? 'md:border-b-0' : ''} ${i % 3 !== 2 ? 'md:border-r' : ''}`}>
                 <div className="mb-[18px] flex h-11 w-11 items-center justify-center rounded-[10px] bg-green-50 text-brand">
                   <span className="h-[22px] w-[22px]">{it.icon}</span>
                 </div>
@@ -275,9 +256,9 @@ export default function HomePage() {
       <StatsBand />
 
       {/* ===== Pricing ===== */}
-      <section className="border-t border-line-1 py-[120px]" id="pricing">
+      <section className="border-t border-line-1 py-16 md:py-[120px]" id="pricing">
         <div className="mx-auto max-w-[1280px] px-6">
-          <div className="mx-auto mb-20 max-w-[720px] text-center">
+          <div className="mx-auto mb-10 max-w-[720px] text-center md:mb-20">
             <span className="mb-[18px] inline-flex items-center gap-2 rounded-full border border-line-1 bg-surface-1 px-2.5 py-1.5 font-mono text-[12px] font-medium uppercase tracking-[0.08em] text-ink-600">
               <span className="relative h-1.5 w-1.5 rounded-full bg-brand">
                 <span className="absolute -inset-[3px] animate-[gl-pulse-dot_1.6s_ease-in-out_infinite] rounded-full bg-brand opacity-40" />
@@ -325,11 +306,11 @@ export default function HomePage() {
       </section>
 
       {/* ===== Final CTA ===== */}
-      <section className="border-t border-line-1 py-20">
+      <section className="border-t border-line-1 py-12 md:py-20">
         <div className="mx-auto max-w-[1280px] px-6">
-          <div className="relative overflow-hidden rounded-[24px] bg-ink-1000 px-16 py-20 text-white">
+          <div className="relative overflow-hidden rounded-[24px] bg-ink-1000 px-6 py-12 text-white md:px-16 md:py-20">
             {/* Radar decoration */}
-            <div className="pointer-events-none absolute -right-[120px] top-1/2 h-[440px] w-[440px] -translate-y-1/2 opacity-30">
+            <div className="pointer-events-none absolute -right-[120px] top-1/2 hidden h-[440px] w-[440px] -translate-y-1/2 opacity-30 md:block">
               <div className="absolute inset-0 rounded-full border border-white/15" />
               <div className="absolute inset-[44px] rounded-full border border-white/15" />
               <div className="absolute inset-[100px] rounded-full border border-white/15" />
@@ -351,11 +332,11 @@ export default function HomePage() {
               <p className="mt-3.5 max-w-[560px] text-[18px] leading-relaxed text-white/65">
                 Set up takes three minutes. The first scored lead lands in your inbox before you finish your coffee.
               </p>
-              <div className="mt-7 flex gap-2.5">
-                <Link href="/signup" className="inline-flex h-[52px] items-center gap-2 rounded-[10px] bg-brand px-[22px] text-[15px] font-medium text-fg-on-brand transition-all duration-[200ms] hover:bg-green-400">
+              <div className="mt-7 flex flex-col gap-2.5 sm:flex-row">
+                <Link href="/signup" className="inline-flex h-[52px] items-center justify-center gap-2 rounded-[10px] bg-brand px-[22px] text-[15px] font-medium text-fg-on-brand transition-all duration-[200ms] hover:bg-green-400">
                   Start free 14-day trial <ArrowRight />
                 </Link>
-                <a href="mailto:hello@gettingleads.com" className="inline-flex h-[52px] items-center rounded-[10px] border border-white/20 bg-transparent px-[22px] text-[15px] font-medium text-white transition-all duration-[200ms] hover:border-white/40 hover:bg-white/[0.06]">
+                <a href="mailto:hello@gettingleads.com" className="inline-flex h-[52px] items-center justify-center rounded-[10px] border border-white/20 bg-transparent px-[22px] text-[15px] font-medium text-white transition-all duration-[200ms] hover:border-white/40 hover:bg-white/[0.06]">
                   Book a 15-minute demo
                 </a>
               </div>
@@ -365,10 +346,10 @@ export default function HomePage() {
       </section>
 
       {/* ===== Footer ===== */}
-      <footer className="border-t border-line-1 px-6 pb-8 pt-16">
+      <footer className="border-t border-line-1 px-6 pb-8 pt-12 md:pt-16">
         <div className="mx-auto max-w-[1280px]">
-          <div className="mb-12 grid grid-cols-[1.4fr_repeat(3,1fr)] gap-12">
-            <div className="flex flex-col gap-3">
+          <div className="mb-10 grid grid-cols-1 gap-8 sm:grid-cols-2 md:mb-12 md:grid-cols-[1.4fr_repeat(3,1fr)] md:gap-12">
+            <div className="flex flex-col gap-3 sm:col-span-2 md:col-span-1">
               <div className="flex items-center gap-2.5">
                 <GLLogo size={26} />
                 <span className="text-[17px] font-semibold tracking-[-0.02em]">GettingLeads</span>
@@ -390,7 +371,7 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-between border-t border-line-1 pt-5 font-mono text-[12px] text-ink-500">
+          <div className="flex flex-col items-center gap-1 border-t border-line-1 pt-5 font-mono text-[12px] text-ink-500 sm:flex-row sm:justify-between">
             <span>&copy; 2026 GettingLeads, Inc.</span>
             <span>v1.2 · All systems operational</span>
           </div>

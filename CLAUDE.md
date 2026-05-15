@@ -6,6 +6,9 @@
 
 ## Codebase Patterns
 - No component library — all inline Tailwind utility classes
+- Tailwind CSS v4 — no `tailwind.config.ts`; all theme tokens (colors, shadows, radii, fonts, keyframes) live in `globals.css` `@theme inline {}` block
+- Landing page (`src/app/page.tsx`) is responsive mobile-first — `md:` (768px) is the primary layout breakpoint
+- `src/app/components/nav.tsx` is the only client component in the landing page shell (hamburger menu state)
 - Server Components: `await createClient()` from `@/lib/supabase/server`
 - Client Components: `createClient()` from `@/lib/supabase/client` (singleton)
 - Admin/webhook: `createAdminClient()` from `@/lib/supabase/admin` (service role, bypasses RLS)

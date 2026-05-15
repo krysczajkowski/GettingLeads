@@ -66,7 +66,7 @@ function StepDemoInbox() {
           <span className={`inline-flex items-baseline gap-[3px] rounded-[6px] px-2 py-1 font-mono text-[12px] font-semibold ${l.score >= 80 ? 'bg-green-50 text-green-700' : 'bg-warn-50 text-warn-700'}`}>
             {l.score}<span className="text-[10px] font-normal opacity-50">/100</span>
           </span>
-          <span className="font-medium text-ink-1000">{l.who}</span>
+          <span className="hidden font-medium text-ink-1000 sm:inline">{l.who}</span>
           <span className="truncate text-ink-600">{l.text}</span>
         </div>
       ))}
@@ -97,10 +97,10 @@ export default function HowItWorks() {
   ]
 
   return (
-    <section className="border-t border-line-1 py-[120px]" id="how">
+    <section className="border-t border-line-1 py-16 md:py-[120px]" id="how">
       <div className="mx-auto max-w-[1280px] px-6">
         {/* Section head */}
-        <div className="mx-auto mb-20 max-w-[720px] text-center">
+        <div className="mx-auto mb-10 max-w-[720px] text-center md:mb-20">
           <span className="mb-[18px] inline-flex items-center gap-2 rounded-full border border-line-1 bg-surface-1 px-2.5 py-1.5 font-mono text-[12px] font-medium uppercase tracking-[0.08em] text-ink-600">
             <span className="relative h-1.5 w-1.5 rounded-full bg-brand">
               <span className="absolute -inset-[3px] animate-[gl-pulse-dot_1.6s_ease-in-out_infinite] rounded-full bg-brand opacity-40" />
@@ -116,7 +116,7 @@ export default function HowItWorks() {
         </div>
 
         {/* Steps grid */}
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {steps.map((step, i) => (
             <div
               key={i}
