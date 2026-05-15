@@ -372,12 +372,12 @@ export async function fetchActiveUsers(
 
 export async function fetchDueUsers(
   supabase: SupabaseClient,
-): Promise<(UserWithGroups & { scrapeHour: number; scrapeTimezone: string; scrapeFrequency: string })[]> {
+): Promise<(UserWithGroups & { scrapeHour: number; scrapeTimezone: string; scrapeDays: string })[]> {
   const now = new Date().toISOString()
 
   const { data: profiles, error } = await supabase
     .from('profiles')
-    .select('id, brand_name, brand_description, retention_days, scrape_hour, scrape_timezone, scrape_frequency')
+    .select('id, brand_name, brand_description, retention_days, scrape_hour, scrape_timezone, scrape_days')
     .eq('subscription_status', 'active')
     .lte('next_scrape_at', now)
     .or(`scrape_lock_until.is.null,scrape_lock_until.lt.${now}`)
@@ -393,7 +393,7 @@ export async function fetchDueUsers(
       ...user,
       scrapeHour: profile.scrape_hour,
       scrapeTimezone: profile.scrape_timezone,
-      scrapeFrequency: profile.scrape_frequency,
+      scrapeDays: profile.scrape_days,
     }
   })
 }

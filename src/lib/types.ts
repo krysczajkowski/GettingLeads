@@ -11,7 +11,7 @@ export type Profile = {
   retention_days: number
   scrape_hour: number
   scrape_timezone: string
-  scrape_frequency: 'daily' | 'every_12h' | 'every_6h'
+  scrape_days: string
   next_scrape_at: string | null
   scrape_lock_until: string | null
   created_at: string

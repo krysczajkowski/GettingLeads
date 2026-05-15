@@ -16,7 +16,7 @@ function isValidMessage(msg: unknown): msg is ScrapeMessage {
     m.groups.every((g) => typeof g === 'object' && g !== null && typeof (g as Record<string, unknown>).url === 'string') &&
     typeof m.scrapeHour === 'number' &&
     typeof m.scrapeTimezone === 'string' &&
-    typeof m.scrapeFrequency === 'string'
+    typeof m.scrapeDays === 'string'
   )
 }
 

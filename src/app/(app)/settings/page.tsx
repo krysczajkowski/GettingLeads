@@ -16,9 +16,9 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('subscription_status, brand_name, brand_description, scrape_hour, scrape_timezone, scrape_frequency')
+    .select('subscription_status, brand_name, brand_description, scrape_hour, scrape_timezone, scrape_days')
     .eq('id', user.id)
-    .single<Pick<Profile, 'subscription_status' | 'brand_name' | 'brand_description' | 'scrape_hour' | 'scrape_timezone' | 'scrape_frequency'>>()
+    .single<Pick<Profile, 'subscription_status' | 'brand_name' | 'brand_description' | 'scrape_hour' | 'scrape_timezone' | 'scrape_days'>>()
 
   if (profile?.subscription_status !== 'active') {
     redirect('/billing')
@@ -71,7 +71,7 @@ export default async function SettingsPage() {
         <ScheduleForm
           initialHour={profile.scrape_hour}
           initialTimezone={profile.scrape_timezone}
-          initialFrequency={profile.scrape_frequency}
+          initialDays={profile.scrape_days}
         />
       </section>
     </div>

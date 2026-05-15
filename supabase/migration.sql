@@ -170,3 +170,18 @@ where next_scrape_at is null;
 create index if not exists idx_profiles_next_scrape
   on public.profiles (next_scrape_at)
   where subscription_status = 'active';
+
+-- ============================================================
+-- 8. Replace scrape_frequency with scrape_days
+-- ============================================================
+alter table public.profiles
+  add column if not exists scrape_days text not null default '0,1,2,3,4,5,6';
+
+-- Back-fill: all existing users get every day selected
+update public.profiles
+set scrape_days = '0,1,2,3,4,5,6'
+where scrape_days = '';
+
+-- Drop the old frequency column (deploy code changes first)
+alter table public.profiles
+  drop column if exists scrape_frequency;

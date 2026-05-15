@@ -1,7 +1,7 @@
 import { app, output, InvocationContext, Timer } from '@azure/functions'
 import { getSupabase } from '../lib/supabase'
 import { fetchDueUsers } from '../lib/pipeline'
-import { computeNextScrapeAt, ScrapeFrequency, ScrapeMessage } from '../lib/schedule'
+import { computeNextScrapeAt, ScrapeMessage } from '../lib/schedule'
 
 const LOCK_DURATION_MS = 15 * 60 * 1000
 
@@ -40,9 +40,14 @@ async function scheduler(timer: Timer, context: InvocationContext): Promise<void
     const nextScrapeAt = computeNextScrapeAt(
       user.scrapeHour,
       user.scrapeTimezone,
-      user.scrapeFrequency as ScrapeFrequency,
+      user.scrapeDays,
       now,
     )
+
+    if (!nextScrapeAt) {
+      context.log(`Scheduler: user ${user.userId} skipped — paused (no days selected)`)
+      continue
+    }
 
     const { data: updated } = await supabase
       .from('profiles')
@@ -67,7 +72,7 @@ async function scheduler(timer: Timer, context: InvocationContext): Promise<void
       groups: user.groups,
       scrapeHour: user.scrapeHour,
       scrapeTimezone: user.scrapeTimezone,
-      scrapeFrequency: user.scrapeFrequency as ScrapeFrequency,
+      scrapeDays: user.scrapeDays,
     })
   }
 

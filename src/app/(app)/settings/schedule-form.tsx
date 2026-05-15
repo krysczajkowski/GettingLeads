@@ -2,15 +2,10 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-type Frequency = 'daily' | 'every_12h' | 'every_6h'
-
-const FREQUENCIES: { value: Frequency; label: string }[] = [
-  { value: 'daily', label: 'Once a day' },
-  { value: 'every_12h', label: 'Twice a day (every 12h)' },
-  { value: 'every_6h', label: 'Four times a day (every 6h)' },
-]
+const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const
+const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const
 
 const TIMEZONES = [
   'UTC',
@@ -38,9 +33,40 @@ function formatHour(h: number): string {
   return h < 12 ? `${h}:00 AM` : `${h - 12}:00 PM`
 }
 
-function computeNextScrapeAt(hour: number, timezone: string, frequency: Frequency): string {
-  const intervalHours = frequency === 'daily' ? 24 : frequency === 'every_12h' ? 12 : 6
-  const intervalMs = intervalHours * 3_600_000
+function parseDays(scrapeDays: string): Set<number> {
+  if (!scrapeDays || scrapeDays.trim() === '') return new Set()
+  const set = new Set<number>()
+  for (const part of scrapeDays.split(',')) {
+    const n = parseInt(part, 10)
+    if (n >= 0 && n <= 6) set.add(n)
+  }
+  return set
+}
+
+const WEEKDAY_MAP: Record<string, number> = {
+  Monday: 0,
+  Tuesday: 1,
+  Wednesday: 2,
+  Thursday: 3,
+  Friday: 4,
+  Saturday: 5,
+  Sunday: 6,
+}
+
+function getLocalWeekday(date: Date, timezone: string): number {
+  const name = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    weekday: 'long',
+  }).format(date)
+  const day = WEEKDAY_MAP[name]
+  if (day === undefined) throw new Error(`Unrecognised weekday: ${name}`)
+  return day
+}
+
+function computeNextScrapeAt(hour: number, timezone: string, scrapeDays: string): string | null {
+  const days = parseDays(scrapeDays)
+  if (days.size === 0) return null
+
   const now = new Date()
 
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -72,8 +98,12 @@ function computeNextScrapeAt(hour: number, timezone: string, frequency: Frequenc
   const fakeUtc = Date.UTC(localYear, localMonth - 1, localDay, hour, 0, 0)
   let candidate = new Date(fakeUtc - offsetMs)
 
-  while (candidate.getTime() <= now.getTime()) {
-    candidate = new Date(candidate.getTime() + intervalMs)
+  for (let i = 0; i < 7; i++) {
+    const weekday = getLocalWeekday(candidate, timezone)
+    if (days.has(weekday) && candidate.getTime() > now.getTime()) {
+      return candidate.toISOString()
+    }
+    candidate = new Date(candidate.getTime() + 86_400_000)
   }
 
   return candidate.toISOString()
@@ -84,19 +114,41 @@ const selectClasses = "w-full appearance-none rounded-[10px] border border-line-
 export default function ScheduleForm({
   initialHour,
   initialTimezone,
-  initialFrequency,
+  initialDays,
 }: {
   initialHour: number
   initialTimezone: string
-  initialFrequency: string
+  initialDays: string
 }) {
+  const [days, setDays] = useState<Set<number>>(() => parseDays(initialDays))
   const [hour, setHour] = useState(initialHour)
   const [timezone, setTimezone] = useState(initialTimezone)
-  const [frequency, setFrequency] = useState<Frequency>(initialFrequency as Frequency)
+  const [showTzPicker, setShowTzPicker] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    if (initialTimezone !== 'UTC') return
+    const detected = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (TIMEZONES.includes(detected)) {
+      setTimezone(detected)
+    }
+  }, [initialTimezone])
+
+  function toggleDay(day: number) {
+    setDays((prev) => {
+      const next = new Set(prev)
+      if (next.has(day)) {
+        next.delete(day)
+      } else {
+        next.add(day)
+      }
+      return next
+    })
+    setSaved(false)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -115,14 +167,15 @@ export default function ScheduleForm({
       return
     }
 
-    const nextScrapeAt = computeNextScrapeAt(hour, timezone, frequency)
+    const daysStr = [...days].sort((a, b) => a - b).join(',')
+    const nextScrapeAt = days.size === 0 ? null : computeNextScrapeAt(hour, timezone, daysStr)
 
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
         scrape_hour: hour,
         scrape_timezone: timezone,
-        scrape_frequency: frequency,
+        scrape_days: daysStr,
         next_scrape_at: nextScrapeAt,
       })
       .eq('id', user.id)
@@ -141,28 +194,35 @@ export default function ScheduleForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="scrape-frequency" className="text-[13.5px] font-medium text-ink-700">
-            Frequency
-          </label>
-          <select
-            id="scrape-frequency"
-            value={frequency}
-            onChange={(e) => { setFrequency(e.target.value as Frequency); setSaved(false) }}
-            className={selectClasses}
-          >
-            {FREQUENCIES.map((f) => (
-              <option key={f.value} value={f.value}>
-                {f.label}
-              </option>
-            ))}
-          </select>
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[13.5px] font-medium text-ink-700">Days</label>
+        <div className="flex gap-1.5">
+          {DAY_LABELS.map((label, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-label={DAY_NAMES[i]}
+              aria-pressed={days.has(i)}
+              onClick={() => toggleDay(i)}
+              className={`flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-semibold transition-all duration-[120ms] ${
+                days.has(i)
+                  ? 'bg-brand text-fg-on-brand shadow-[0_1px_0_rgba(11,15,14,0.06),0_2px_6px_-1px_rgba(21,179,108,0.35)]'
+                  : 'border border-line-2 bg-surface-2 text-ink-600 hover:border-line-3 hover:bg-surface-3'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
+        {days.size === 0 && (
+          <p className="text-[13px] text-ink-500">Scraping is paused. Select at least one day to resume.</p>
+        )}
+      </div>
 
+      <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="scrape-hour" className="text-[13.5px] font-medium text-ink-700">
-            Start time
+            Time
           </label>
           <select
             id="scrape-hour"
@@ -179,21 +239,32 @@ export default function ScheduleForm({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="scrape-timezone" className="text-[13.5px] font-medium text-ink-700">
-            Timezone
-          </label>
-          <select
-            id="scrape-timezone"
-            value={timezone}
-            onChange={(e) => { setTimezone(e.target.value); setSaved(false) }}
-            className={selectClasses}
-          >
-            {TIMEZONES.map((tz) => (
-              <option key={tz} value={tz}>
-                {tz.replace(/_/g, ' ')}
-              </option>
-            ))}
-          </select>
+          <label className="text-[13.5px] font-medium text-ink-700">Timezone</label>
+          {showTzPicker ? (
+            <select
+              value={timezone}
+              onChange={(e) => { setTimezone(e.target.value); setShowTzPicker(false); setSaved(false) }}
+              className={selectClasses}
+              autoFocus
+            >
+              {TIMEZONES.map((tz) => (
+                <option key={tz} value={tz}>
+                  {tz.replace(/_/g, ' ')}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p className="flex h-[42px] items-center text-[14px] text-ink-1000">
+              {timezone.replace(/_/g, ' ')}
+              <button
+                type="button"
+                onClick={() => setShowTzPicker(true)}
+                className="ml-2 text-[13px] text-brand hover:underline"
+              >
+                Change
+              </button>
+            </p>
+          )}
         </div>
       </div>
 

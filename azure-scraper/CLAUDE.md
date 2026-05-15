@@ -22,7 +22,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Azure Functions v4 Node.js project that scrapes Facebook groups for leads. Uses a scheduler + queue architecture: a timer checks every 5 minutes for users due for a scrape, enqueues one Azure Storage Queue message per user, and a queue-triggered worker processes each user independently in parallel. Separate project from the parent Next.js app — own `package.json`, `tsconfig.json`, not a monorepo.
 
 **Scheduling flow** (`scheduler` → Azure Storage Queue → `scrapeWorker`):
-1. Scheduler queries `profiles` for users where `next_scrape_at <= now()` and lock is clear
+1. Scheduler queries `profiles` for users where `next_scrape_at <= now()` and lock is clear (paused users have null `next_scrape_at`, never matched)
 2. Atomically sets `scrape_lock_until` (15 min TTL) and advances `next_scrape_at`
 3. Enqueues a `ScrapeMessage` per user to the `scrape-jobs` queue
 4. Worker picks up one message, calls `processUser()`, clears the lock on completion
@@ -40,7 +40,7 @@ Azure Functions v4 Node.js project that scrapes Facebook groups for leads. Uses 
 - `src/functions/scheduler.ts` — 5-min timer, queries due users, enqueues to Storage Queue
 - `src/functions/scrapeWorker.ts` — queue trigger, processes one user per message
 - `src/lib/pipeline.ts` — orchestration, usage tracking, scrape logging
-- `src/lib/schedule.ts` — `computeNextScrapeAt`, `ScrapeFrequency`, `ScrapeMessage` types
+- `src/lib/schedule.ts` — `computeNextScrapeAt`, `parseDays`, `ScrapeMessage` types
 - `src/lib/brightdata.ts` — BrightData scrape API (trigger/poll/download), URL validation
 - `src/lib/classifier.ts` — OpenAI GPT classification, result validation
 - `src/lib/supabase.ts` — lazy singleton Supabase client (service role)
@@ -65,10 +65,10 @@ Azure Functions v4 Node.js project that scrapes Facebook groups for leads. Uses 
 
 - `scrape_hour` (int, default 6) — hour in user's timezone (0-23)
 - `scrape_timezone` (text, default 'UTC') — IANA timezone name
-- `scrape_frequency` (text, default 'daily') — `daily` | `every_12h` | `every_6h`
-- `next_scrape_at` (timestamptz) — scheduler polls `WHERE next_scrape_at <= now()`
+- `scrape_days` (text, default '0,1,2,3,4,5,6') — comma-separated day numbers (0=Mon, 6=Sun); empty string = paused
+- `next_scrape_at` (timestamptz, nullable) — scheduler polls `WHERE next_scrape_at <= now()`; null = paused
 - `scrape_lock_until` (timestamptz) — 15-min TTL lock, prevents double-enqueue, self-heals on worker crash
-- Migration: section 7 in `supabase/migration.sql` — run in Supabase SQL Editor
+- Migration: sections 7+8 in `supabase/migration.sql` — run in Supabase SQL Editor
 
 ## TypeScript Config
 

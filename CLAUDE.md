@@ -31,7 +31,7 @@
 - Scheduler (5-min timer) checks `profiles.next_scrape_at`, enqueues to Azure Storage Queue `scrape-jobs`
 - Worker (queue trigger) processes one user per message via `processUser()` — parallel, isolated
 - Double-scrape prevention: `profiles.scrape_lock_until` column (15-min TTL, self-healing)
-- Per-user schedule: `profiles.scrape_hour/scrape_timezone/scrape_frequency` — UI on `/settings`
+- Per-user schedule: `profiles.scrape_hour/scrape_timezone/scrape_days` — UI on `/settings`; `scrape_days` is comma-separated day numbers (0=Mon, 6=Sun), empty = paused
 - Barrel entry point `src/index.ts` imports all function registrations — `package.json` `"main"` points to `dist/index.js`
 - Supabase: `getSupabase()` lazy singleton using service role key (no cookies)
 - BrightData + OpenAI: plain `fetch` calls, no SDK dependencies
@@ -57,10 +57,12 @@
 - Required env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`
 - Local Stripe webhook testing: `stripe listen --forward-to localhost:3000/api/stripe/webhook`
 - `azure-scraper/local.settings.json` is gitignored — holds secrets for local dev
-- `supabase/migration.sql` section 7 adds per-user scheduling columns — must be run before scheduler works
+- `supabase/migration.sql` sections 7+8 add per-user scheduling columns — must be run before scheduler works
 - Azure Storage Queue `scrape-jobs` must exist in `gettingleadsstorage` (runtime usually auto-creates on first deploy)
 - Local Azure Functions testing requires Azurite: `npx azurite --silent --location .azurite`
 - `computeNextScrapeAt` handles half-hour timezones (Asia/Kolkata UTC+5:30) — uses minute-precision offset calculation
+- `computeNextScrapeAt` is duplicated in `settings/schedule-form.tsx` (client) and `azure-scraper/src/lib/schedule.ts` (server) — must be kept in sync manually
+- Settings page (`/settings`) Supabase `select` must match actual DB columns — a missing column returns null profile, which triggers the subscription gate redirect to `/billing`
 - Never show Supabase `error.message` to users in Client Components — use generic error strings (GDPR). This includes auth errors (login/signup) to prevent user enumeration
 - Never log raw Supabase `error.message` server-side either — log `error.code` only
 - Security headers (X-Frame-Options, HSTS, etc.) are configured in `next.config.ts` `headers()` — don't remove

@@ -1,11 +1,3 @@
-export type ScrapeFrequency = 'daily' | 'every_12h' | 'every_6h'
-
-const INTERVAL_HOURS: Record<ScrapeFrequency, number> = {
-  daily: 24,
-  every_12h: 12,
-  every_6h: 6,
-}
-
 export type ScrapeMessage = {
   userId: string
   brandName: string | null
@@ -14,25 +6,37 @@ export type ScrapeMessage = {
   groups: { url: string }[]
   scrapeHour: number
   scrapeTimezone: string
-  scrapeFrequency: ScrapeFrequency
+  scrapeDays: string
 }
 
-export function computeNextScrapeAt(
-  hour: number,
-  timezone: string,
-  frequency: ScrapeFrequency,
-  after: Date = new Date(),
-): Date {
-  const intervalMs = INTERVAL_HOURS[frequency] * 3_600_000
+const WEEKDAY_MAP: Record<string, number> = {
+  Monday: 0,
+  Tuesday: 1,
+  Wednesday: 2,
+  Thursday: 3,
+  Friday: 4,
+  Saturday: 5,
+  Sunday: 6,
+}
 
-  let candidate = localHourToUtc(after, hour, timezone)
-
-  // If candidate is in the past or right now, walk forward by interval
-  while (candidate.getTime() <= after.getTime()) {
-    candidate = new Date(candidate.getTime() + intervalMs)
+export function parseDays(scrapeDays: string): Set<number> {
+  if (!scrapeDays || scrapeDays.trim() === '') return new Set()
+  const set = new Set<number>()
+  for (const part of scrapeDays.split(',')) {
+    const n = parseInt(part, 10)
+    if (n >= 0 && n <= 6) set.add(n)
   }
+  return set
+}
 
-  return candidate
+function getLocalWeekday(date: Date, timezone: string): number {
+  const name = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    weekday: 'long',
+  }).format(date)
+  const day = WEEKDAY_MAP[name]
+  if (day === undefined) throw new Error(`Unrecognised weekday: ${name}`)
+  return day
 }
 
 function localHourToUtc(reference: Date, hour: number, timezone: string): Date {
@@ -53,10 +57,8 @@ function localHourToUtc(reference: Date, hour: number, timezone: string): Date {
   const localMonth = get('month')
   const localDay = get('day')
 
-  // Build "today at `hour`:00" as a fake UTC timestamp
   const fakeUtc = Date.UTC(localYear, localMonth - 1, localDay, hour, 0, 0)
 
-  // Find the actual UTC offset (including fractional hours like UTC+5:30)
   const noon = new Date(Date.UTC(localYear, localMonth - 1, localDay, 12, 0, 0))
   const noonParts = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
@@ -69,4 +71,26 @@ function localHourToUtc(reference: Date, hour: number, timezone: string): Date {
   const offsetMs = (noonH - 12) * 3_600_000 + noonM * 60_000
 
   return new Date(fakeUtc - offsetMs)
+}
+
+export function computeNextScrapeAt(
+  hour: number,
+  timezone: string,
+  scrapeDays: string,
+  after: Date = new Date(),
+): Date | null {
+  const days = parseDays(scrapeDays)
+  if (days.size === 0) return null
+
+  let candidate = localHourToUtc(after, hour, timezone)
+
+  for (let i = 0; i < 7; i++) {
+    const weekday = getLocalWeekday(candidate, timezone)
+    if (days.has(weekday) && candidate.getTime() > after.getTime()) {
+      return candidate
+    }
+    candidate = new Date(candidate.getTime() + 86_400_000)
+  }
+
+  return candidate
 }
