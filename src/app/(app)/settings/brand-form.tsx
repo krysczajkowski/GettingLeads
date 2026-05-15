@@ -51,13 +51,14 @@ export default function BrandForm({
 
     setSaving(false)
     setSaved(true)
+    setTimeout(() => setSaved(false), 1500)
     router.refresh()
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="brand-name" className="block text-sm font-medium text-gray-700">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="brand-name" className="text-[13.5px] font-medium text-ink-700">
           Brand name
         </label>
         <input
@@ -66,13 +67,13 @@ export default function BrandForm({
           required
           value={brandName}
           onChange={(e) => { setBrandName(e.target.value); setSaved(false) }}
-          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-[10px] border border-line-2 bg-white px-3 py-2.5 text-[14px] text-ink-1000 outline-none transition-all duration-[120ms] placeholder:text-ink-400 focus:border-brand focus:shadow-focus"
           placeholder="e.g. EquineBoost"
         />
       </div>
 
-      <div>
-        <label htmlFor="brand-description" className="block text-sm font-medium text-gray-700">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="brand-description" className="text-[13.5px] font-medium text-ink-700">
           Brand description
         </label>
         <textarea
@@ -81,20 +82,29 @@ export default function BrandForm({
           rows={3}
           value={brandDescription}
           onChange={(e) => { setBrandDescription(e.target.value); setSaved(false) }}
-          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="Describe your brand and what you sell so the AI can identify relevant leads..."
+          className="w-full resize-y rounded-[10px] border border-line-2 bg-white px-3 py-2.5 text-[14px] leading-relaxed text-ink-1000 outline-none transition-all duration-[120ms] placeholder:text-ink-400 focus:border-brand focus:shadow-focus"
+          placeholder="e.g. We sell 3PL services to ecommerce founders shipping out of the US..."
         />
+        <span className="text-[12px] text-ink-500">One paragraph is plenty — be specific about who, what, and the moment they need you.</span>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {saved && <p className="text-sm text-green-600">Brand settings saved.</p>}
+      {error && <p className="text-[13px] text-danger-500">{error}</p>}
 
       <button
         type="submit"
         disabled={saving}
-        className="rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className={`inline-flex items-center gap-2 rounded-[10px] px-[18px] py-2.5 text-[14px] font-medium text-fg-on-brand transition-all duration-[200ms] disabled:cursor-not-allowed disabled:opacity-50 ${
+          saved
+            ? 'bg-brand-press'
+            : 'bg-brand shadow-[0_1px_0_rgba(11,15,14,0.06),0_4px_10px_-2px_rgba(21,179,108,0.35)] hover:-translate-y-px hover:bg-brand-hover hover:shadow-[0_1px_0_rgba(11,15,14,0.06),0_8px_16px_-2px_rgba(21,179,108,0.45)] active:translate-y-0 active:scale-[0.985]'
+        }`}
       >
-        {saving ? 'Saving...' : 'Save'}
+        {saved ? (
+          <>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+            Saved
+          </>
+        ) : saving ? 'Saving...' : 'Save'}
       </button>
     </form>
   )

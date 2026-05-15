@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <title>Radar backdrop — decorative</title>
+  <defs>
+    <radialGradient id="gl-radar-fade" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#15B36C" stop-opacity="0.06"></stop>
+      <stop offset="70%" stop-color="#15B36C" stop-opacity="0"></stop>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#gl-radar-fade)"></rect>
+  <g transform="translate(400 300)" stroke="#15B36C" fill="none" stroke-width="1" opacity="0.18">
+    <circle r="60"></circle>
+    <circle r="120"></circle>
+    <circle r="180"></circle>
+    <circle r="240"></circle>
+    <circle r="300"></circle>
+    <line x1="-320" y1="0" x2="320" y2="0"></line>
+    <line x1="0" y1="-320" x2="0" y2="320"></line>
+  </g>
+</svg>

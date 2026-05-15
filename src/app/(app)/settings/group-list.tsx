@@ -12,6 +12,18 @@ function isValidFacebookGroupUrl(url: string): boolean {
   return FB_GROUP_PATTERN.test(url.trim())
 }
 
+const UsersIcon = () => (
+  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="9" cy="8" r="4"/><path d="M1 21a8 8 0 0 1 16 0"/><path d="M17 4a4 4 0 0 1 0 8"/>
+  </svg>
+)
+
+const PlusIcon = () => (
+  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+    <path d="M12 5v14M5 12h14"/>
+  </svg>
+)
+
 export default function GroupList({ groups }: { groups: Group[] }) {
   const [url, setUrl] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -109,34 +121,46 @@ export default function GroupList({ groups }: { groups: Group[] }) {
 
   return (
     <div className="space-y-4">
-      {groups.length === 0 ? (
-        <p className="text-sm text-gray-500">No groups added yet.</p>
-      ) : (
-        <ul className="divide-y divide-gray-200">
-          {groups.map((group) => (
-            <li key={group.id} className="flex items-center justify-between py-3">
-              <a
-                href={group.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="truncate text-sm text-blue-600 hover:underline"
-              >
-                {group.url}
-              </a>
+      {groups.length > 0 && (
+        <div className="overflow-hidden rounded-[10px] border border-line-1">
+          {groups.map((group, i) => (
+            <div
+              key={group.id}
+              className={`flex items-center justify-between bg-surface-1 px-3.5 py-3 transition-colors duration-[120ms] hover:bg-surface-2 ${
+                i < groups.length - 1 ? 'border-b border-line-1' : ''
+              }`}
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border border-green-100 bg-green-50 text-brand">
+                  <UsersIcon />
+                </span>
+                <a
+                  href={group.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="truncate font-mono text-[13px] text-ink-1000 transition-colors duration-[120ms] hover:text-brand"
+                >
+                  {group.url}
+                </a>
+              </div>
               <button
                 type="button"
                 onClick={() => handleDelete(group.id)}
                 disabled={deletingId === group.id}
-                className="ml-4 shrink-0 text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
+                className="shrink-0 rounded-[6px] px-2 py-1 text-[12px] font-medium text-danger-700 transition-colors duration-[120ms] hover:bg-danger-50 disabled:opacity-50"
               >
                 {deletingId === group.id ? 'Removing...' : 'Remove'}
               </button>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
 
-      <form onSubmit={handleAdd} className="flex gap-2">
+      {groups.length === 0 && (
+        <p className="text-[13px] text-ink-500">No groups added yet.</p>
+      )}
+
+      <form onSubmit={handleAdd} className="flex items-stretch gap-2.5">
         <input
           type="url"
           required
@@ -144,20 +168,20 @@ export default function GroupList({ groups }: { groups: Group[] }) {
           onChange={(e) => setUrl(e.target.value)}
           disabled={atLimit}
           placeholder={atLimit ? `Limit of ${MAX_GROUPS} groups reached` : 'https://facebook.com/groups/...'}
-          className="block flex-1 rounded border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
+          className="flex-1 rounded-[10px] border border-line-2 bg-white px-3 py-2.5 text-[14px] text-ink-1000 outline-none transition-all duration-[120ms] placeholder:text-ink-400 focus:border-brand focus:shadow-focus disabled:bg-surface-2 disabled:text-ink-400"
         />
         <button
           type="submit"
           disabled={adding || atLimit}
-          className="shrink-0 rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex shrink-0 items-center gap-2 rounded-[10px] bg-brand px-5 py-2.5 text-[14px] font-medium text-fg-on-brand shadow-[0_1px_0_rgba(11,15,14,0.06),0_4px_10px_-2px_rgba(21,179,108,0.35)] transition-all duration-[200ms] hover:-translate-y-px hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-ink-300 disabled:shadow-none disabled:hover:translate-y-0"
         >
-          {adding ? 'Adding...' : 'Add'}
+          <PlusIcon /> Add
         </button>
       </form>
 
-      <p className="text-xs text-gray-400">{groups.length} / {MAX_GROUPS} groups</p>
+      <p className="font-mono text-[12px] tabular-nums text-ink-500">{groups.length} / {MAX_GROUPS} groups</p>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-[13px] text-danger-500">{error}</p>}
     </div>
   )
 }

@@ -79,6 +79,8 @@ function computeNextScrapeAt(hour: number, timezone: string, frequency: Frequenc
   return candidate.toISOString()
 }
 
+const selectClasses = "w-full appearance-none rounded-[10px] border border-line-2 bg-white bg-[url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235A6360' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")] bg-[right_12px_center] bg-no-repeat px-3 py-2.5 pr-[38px] text-[14px] text-ink-1000 outline-none transition-all duration-[120ms] focus:border-brand focus:shadow-focus"
+
 export default function ScheduleForm({
   initialHour,
   initialTimezone,
@@ -133,74 +135,85 @@ export default function ScheduleForm({
 
     setSaving(false)
     setSaved(true)
+    setTimeout(() => setSaved(false), 1500)
     router.refresh()
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="scrape-frequency" className="block text-sm font-medium text-gray-700">
-          Frequency
-        </label>
-        <select
-          id="scrape-frequency"
-          value={frequency}
-          onChange={(e) => { setFrequency(e.target.value as Frequency); setSaved(false) }}
-          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          {FREQUENCIES.map((f) => (
-            <option key={f.value} value={f.value}>
-              {f.label}
-            </option>
-          ))}
-        </select>
+      <div className="grid grid-cols-3 gap-3.5">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="scrape-frequency" className="text-[13.5px] font-medium text-ink-700">
+            Frequency
+          </label>
+          <select
+            id="scrape-frequency"
+            value={frequency}
+            onChange={(e) => { setFrequency(e.target.value as Frequency); setSaved(false) }}
+            className={selectClasses}
+          >
+            {FREQUENCIES.map((f) => (
+              <option key={f.value} value={f.value}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="scrape-hour" className="text-[13.5px] font-medium text-ink-700">
+            Start time
+          </label>
+          <select
+            id="scrape-hour"
+            value={hour}
+            onChange={(e) => { setHour(parseInt(e.target.value)); setSaved(false) }}
+            className={selectClasses}
+          >
+            {Array.from({ length: 24 }, (_, i) => (
+              <option key={i} value={i}>
+                {formatHour(i)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="scrape-timezone" className="text-[13.5px] font-medium text-ink-700">
+            Timezone
+          </label>
+          <select
+            id="scrape-timezone"
+            value={timezone}
+            onChange={(e) => { setTimezone(e.target.value); setSaved(false) }}
+            className={selectClasses}
+          >
+            {TIMEZONES.map((tz) => (
+              <option key={tz} value={tz}>
+                {tz.replace(/_/g, ' ')}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      <div>
-        <label htmlFor="scrape-hour" className="block text-sm font-medium text-gray-700">
-          Start time
-        </label>
-        <select
-          id="scrape-hour"
-          value={hour}
-          onChange={(e) => { setHour(parseInt(e.target.value)); setSaved(false) }}
-          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          {Array.from({ length: 24 }, (_, i) => (
-            <option key={i} value={i}>
-              {formatHour(i)}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label htmlFor="scrape-timezone" className="block text-sm font-medium text-gray-700">
-          Timezone
-        </label>
-        <select
-          id="scrape-timezone"
-          value={timezone}
-          onChange={(e) => { setTimezone(e.target.value); setSaved(false) }}
-          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          {TIMEZONES.map((tz) => (
-            <option key={tz} value={tz}>
-              {tz.replace(/_/g, ' ')}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {saved && <p className="text-sm text-green-600">Schedule saved.</p>}
+      {error && <p className="text-[13px] text-danger-500">{error}</p>}
 
       <button
         type="submit"
         disabled={saving}
-        className="rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className={`inline-flex items-center gap-2 rounded-[10px] px-[18px] py-2.5 text-[14px] font-medium text-fg-on-brand transition-all duration-[200ms] disabled:cursor-not-allowed disabled:opacity-50 ${
+          saved
+            ? 'bg-brand-press'
+            : 'bg-brand shadow-[0_1px_0_rgba(11,15,14,0.06),0_4px_10px_-2px_rgba(21,179,108,0.35)] hover:-translate-y-px hover:bg-brand-hover hover:shadow-[0_1px_0_rgba(11,15,14,0.06),0_8px_16px_-2px_rgba(21,179,108,0.45)] active:translate-y-0 active:scale-[0.985]'
+        }`}
       >
-        {saving ? 'Saving...' : 'Save'}
+        {saved ? (
+          <>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+            Saved
+          </>
+        ) : saving ? 'Saving...' : 'Save'}
       </button>
     </form>
   )

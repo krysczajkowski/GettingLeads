@@ -32,43 +32,47 @@ export default async function SettingsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+      <div className="mb-7 flex flex-col gap-2">
+        <span className="eyebrow">Configuration</span>
+        <h1 className="text-[36px] font-semibold leading-[1.05] tracking-[-0.025em] text-ink-1000">Settings</h1>
+        <p className="text-[15px] leading-[1.5] text-ink-600">Tell us who you sell to, which groups to watch, and when to check them.</p>
+      </div>
 
-      <section className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-gray-900">Brand</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Describe your brand so the AI knows what leads to look for.
-        </p>
-        <div className="mt-4">
-          <BrandForm
-            initialName={profile.brand_name ?? ''}
-            initialDescription={profile.brand_description ?? ''}
-          />
+      <section className="mb-4 rounded-[16px] border border-line-1 bg-white p-6 shadow-card">
+        <div className="mb-3.5">
+          <span className="eyebrow">Step 1</span>
+          <h2 className="mt-1 text-[18px] font-semibold tracking-[-0.015em] text-ink-1000">Brand</h2>
         </div>
+        <p className="-mt-1.5 mb-[18px] text-[13.5px] leading-[1.5] text-ink-600">Describe your brand so the AI knows what leads to look for.</p>
+        <BrandForm
+          initialName={profile.brand_name ?? ''}
+          initialDescription={profile.brand_description ?? ''}
+        />
       </section>
 
-      <section className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-gray-900">Facebook Groups</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Add public Facebook groups to monitor for leads.
-        </p>
-        <div className="mt-4">
-          <GroupList groups={(groups as Group[]) ?? []} />
+      <section className="mb-4 rounded-[16px] border border-line-1 bg-white p-6 shadow-card">
+        <div className="mb-3.5 flex items-baseline justify-between gap-3.5">
+          <div>
+            <span className="eyebrow">Step 2</span>
+            <h2 className="mt-1 text-[18px] font-semibold tracking-[-0.015em] text-ink-1000">Facebook groups</h2>
+          </div>
+          <span className="font-mono text-[12px] tabular-nums text-ink-500">{(groups ?? []).length} / 10 groups</span>
         </div>
+        <p className="-mt-1.5 mb-[18px] text-[13.5px] leading-[1.5] text-ink-600">Add public Facebook groups to monitor for leads.</p>
+        <GroupList groups={(groups as Group[]) ?? []} />
       </section>
 
-      <section className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-gray-900">Scrape Schedule</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Choose when your groups are checked for new leads.
-        </p>
-        <div className="mt-4">
-          <ScheduleForm
-            initialHour={profile.scrape_hour}
-            initialTimezone={profile.scrape_timezone}
-            initialFrequency={profile.scrape_frequency}
-          />
+      <section className="mb-4 rounded-[16px] border border-line-1 bg-white p-6 shadow-card">
+        <div className="mb-3.5">
+          <span className="eyebrow">Step 3</span>
+          <h2 className="mt-1 text-[18px] font-semibold tracking-[-0.015em] text-ink-1000">Scrape schedule</h2>
         </div>
+        <p className="-mt-1.5 mb-[18px] text-[13.5px] leading-[1.5] text-ink-600">Choose when your groups are checked for new leads.</p>
+        <ScheduleForm
+          initialHour={profile.scrape_hour}
+          initialTimezone={profile.scrape_timezone}
+          initialFrequency={profile.scrape_frequency}
+        />
       </section>
     </div>
   )
