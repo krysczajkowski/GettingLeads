@@ -34,7 +34,7 @@ export default async function SettingsPage() {
     <div>
       <div className="mb-7 flex flex-col gap-2">
         <span className="eyebrow">Configuration</span>
-        <h1 className="text-[36px] font-semibold leading-[1.05] tracking-[-0.025em] text-ink-1000">Settings</h1>
+        <h1 className="text-[28px] font-semibold leading-[1.05] tracking-[-0.025em] text-ink-1000 md:text-[36px]">Settings</h1>
         <p className="text-[15px] leading-[1.5] text-ink-600">Tell us who you sell to, which groups to watch, and when to check them.</p>
       </div>
 

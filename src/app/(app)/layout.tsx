@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import type { Profile } from '@/lib/types'
 import SignOutButton from './components/sign-out-button'
 import NavItem from './components/nav-item'
+import MobileNav from './components/mobile-nav'
 
 const DashIcon = () => (
   <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -57,8 +58,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const initial = (user.email ?? 'U')[0].toUpperCase()
 
   return (
-    <div className="flex min-h-screen bg-surface-1">
-      <aside className="sticky top-0 flex h-screen w-[232px] flex-col border-r border-line-1 bg-white px-4 py-[22px]">
+    <div className="flex min-h-screen flex-col bg-surface-1 md:flex-row">
+      <MobileNav isActive={isActive} email={user.email ?? ''} initial={initial} />
+      <aside className="sticky top-0 hidden h-screen w-[232px] flex-col border-r border-line-1 bg-white px-4 py-[22px] md:flex">
         {/* Brand */}
         <div className="flex items-center gap-2.5 px-2 pb-[18px]">
           <LogoMark />
@@ -106,7 +108,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </aside>
-      <main className="flex-1 px-12 py-11">{children}</main>
+      <main className="flex-1 px-4 py-6 md:px-6 md:py-8 xl:px-12 xl:py-11">{children}</main>
     </div>
   )
 }

@@ -30,7 +30,7 @@ export default async function DashboardPage() {
       <div>
         <div className="mb-7 flex flex-col gap-2">
           <span className="eyebrow">Overview</span>
-          <h1 className="text-[36px] font-semibold leading-[1.05] tracking-[-0.025em] text-ink-1000">Dashboard</h1>
+          <h1 className="text-[28px] font-semibold leading-[1.05] tracking-[-0.025em] text-ink-1000 md:text-[36px]">Dashboard</h1>
         </div>
         <div className="rounded-[16px] border border-line-1 bg-white p-8 text-center shadow-card">
           <p className="text-[15px] text-ink-600">
@@ -68,13 +68,13 @@ export default async function DashboardPage() {
     <div>
       <div className="mb-7 flex flex-col gap-2">
         <span className="eyebrow">Overview · last 7 days</span>
-        <h1 className="text-[36px] font-semibold leading-[1.05] tracking-[-0.025em] text-ink-1000">Dashboard</h1>
+        <h1 className="text-[28px] font-semibold leading-[1.05] tracking-[-0.025em] text-ink-1000 md:text-[36px]">Dashboard</h1>
         <p className="text-[15px] leading-[1.5] text-ink-600">A live look at every lead matched against your brand.</p>
       </div>
 
       {/* Stat strip */}
-      <div className="mb-4 grid grid-cols-4 overflow-hidden rounded-[16px] border border-line-1 bg-white shadow-card">
-        <div className="flex flex-col gap-1.5 border-r border-line-1 px-6 py-[22px]">
+      <div className="mb-4 grid grid-cols-2 overflow-hidden rounded-[16px] border border-line-1 bg-white shadow-card xl:grid-cols-4">
+        <div className="flex flex-col gap-1.5 border-b border-r border-line-1 px-6 py-[22px] xl:border-b-0">
           <span className="font-mono text-[11px] font-medium uppercase tracking-[0.06em] text-ink-500">Total leads</span>
           <span className="text-[28px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-ink-1000">{totalLeads}</span>
           <span className="inline-flex items-center gap-1 font-mono text-[11.5px] tabular-nums text-brand">
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
             +{totalLeads} total
           </span>
         </div>
-        <div className="flex flex-col gap-1.5 border-r border-line-1 px-6 py-[22px]">
+        <div className="flex flex-col gap-1.5 border-b border-line-1 px-6 py-[22px] xl:border-b-0 xl:border-r">
           <span className="font-mono text-[11px] font-medium uppercase tracking-[0.06em] text-ink-500">Avg score</span>
           <span className="text-[28px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-ink-1000">—<span className="ml-1 text-[14px] font-medium text-ink-500">%</span></span>
           <span className="font-mono text-[11.5px] tabular-nums text-ink-500">Placeholder</span>

@@ -141,7 +141,7 @@ export default function ScheduleForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-3 gap-3.5">
+      <div className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="scrape-frequency" className="text-[13.5px] font-medium text-ink-700">
             Frequency

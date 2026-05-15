@@ -25,7 +25,7 @@ export default async function BillingPage() {
     <div>
       <div className="mb-7 flex flex-col gap-2">
         <span className="eyebrow">Plan & invoices</span>
-        <h1 className="text-[36px] font-semibold leading-[1.05] tracking-[-0.025em] text-ink-1000">Billing</h1>
+        <h1 className="text-[28px] font-semibold leading-[1.05] tracking-[-0.025em] text-ink-1000 md:text-[36px]">Billing</h1>
         <p className="text-[15px] leading-[1.5] text-ink-600">Manage your subscription, payment method, and history.</p>
       </div>
 
@@ -54,7 +54,7 @@ export default async function BillingPage() {
           </div>
         </>
       ) : (
-        <div className="mb-4 rounded-[16px] border border-line-1 bg-white p-8 text-center shadow-card">
+        <div className="mb-4 rounded-[16px] border border-line-1 bg-white p-5 text-center shadow-card md:p-8">
           <h2 className="text-[20px] font-semibold text-ink-1000">GettingLeads Pro</h2>
           <p className="mt-1 text-[30px] font-bold tracking-[-0.02em] text-ink-1000">
             $50<span className="text-[14px] font-normal text-ink-500">/month</span>

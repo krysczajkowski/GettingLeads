@@ -110,11 +110,11 @@ export default function LeadsTable({
   return (
     <div className="overflow-hidden rounded-[16px] border border-line-1 bg-white shadow-card">
       {/* Header with filter chips */}
-      <div className="flex items-center justify-between border-b border-line-1 px-6 py-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-1 px-4 py-4 md:px-6 md:py-5">
         <h2 className="text-[18px] font-semibold tracking-[-0.015em] text-ink-1000">
           Leads <span className="ml-1.5 font-mono text-[14px] font-normal text-ink-500">({visible.length})</span>
         </h2>
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
           <button type="button" className={chipClass(filter === 'all')} onClick={() => setFilter('all')}>
             All <span className="font-mono text-[11px] opacity-60">{leads.length}</span>
           </button>
@@ -131,12 +131,12 @@ export default function LeadsTable({
         <table className="w-full border-collapse">
           <thead>
             <tr>
-              <th className="border-b border-line-1 bg-surface-1 px-6 py-3 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-500">Post</th>
-              <th className="border-b border-line-1 bg-surface-1 px-6 py-3 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-500">Group</th>
-              <th className="border-b border-line-1 bg-surface-1 px-6 py-3 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-500">Score</th>
-              <th className="border-b border-line-1 bg-surface-1 px-6 py-3 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-500">Category</th>
-              <th className="border-b border-line-1 bg-surface-1 px-6 py-3 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-500">Reason</th>
-              <th className="border-b border-line-1 bg-surface-1 px-6 py-3 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-500">Date</th>
+              <th className="border-b border-line-1 bg-surface-1 px-4 py-3 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-500 md:px-6">Post</th>
+              <th className="hidden border-b border-line-1 bg-surface-1 px-6 py-3 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-500 xl:table-cell">Group</th>
+              <th className="border-b border-line-1 bg-surface-1 px-4 py-3 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-500 md:px-6">Score</th>
+              <th className="hidden border-b border-line-1 bg-surface-1 px-6 py-3 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-500 xl:table-cell">Category</th>
+              <th className="hidden border-b border-line-1 bg-surface-1 px-6 py-3 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-500 xl:table-cell">Reason</th>
+              <th className="border-b border-line-1 bg-surface-1 px-4 py-3 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-500 md:px-6">Date</th>
             </tr>
           </thead>
           <tbody>
@@ -147,7 +147,7 @@ export default function LeadsTable({
                   i < visible.length - 1 ? 'border-b border-line-1' : ''
                 }`}
               >
-                <td className="whitespace-nowrap px-6 py-3.5">
+                <td className="whitespace-nowrap px-4 py-3.5 md:px-6">
                   {isSafeUrl(lead.post_url) ? (
                     <a
                       href={lead.post_url}
@@ -162,25 +162,25 @@ export default function LeadsTable({
                     <span className="text-[14px] text-ink-400">Invalid link</span>
                   )}
                 </td>
-                <td className="max-w-[260px] px-6 py-3.5">
+                <td className="hidden max-w-[260px] px-6 py-3.5 xl:table-cell">
                   <span className="inline-block max-w-[260px] truncate font-mono text-[12.5px] text-ink-600">
                     {lead.source_url}
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-6 py-3.5">
+                <td className="whitespace-nowrap px-4 py-3.5 md:px-6">
                   <span className={`inline-flex items-baseline gap-0.5 rounded-[6px] px-2.5 py-[3px] font-mono text-[12.5px] font-semibold tabular-nums ${scoreClasses(lead.score)}`}>
                     {Math.round(lead.score * 100)}%
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-6 py-3.5">
+                <td className="hidden whitespace-nowrap px-6 py-3.5 xl:table-cell">
                   <span className="inline-block rounded-full border border-line-1 bg-surface-2 px-2.5 py-[3px] text-[12px] font-medium text-ink-700">
                     {formatCategory(lead.category)}
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-6 py-3.5 text-[13.5px] text-ink-600">
+                <td className="hidden whitespace-nowrap px-6 py-3.5 text-[13.5px] text-ink-600 xl:table-cell">
                   {lead.reason_code.replace(/_/g, ' ')}
                 </td>
-                <td className="whitespace-nowrap px-6 py-3.5 font-mono text-[12.5px] text-ink-500">
+                <td className="whitespace-nowrap px-4 py-3.5 font-mono text-[12.5px] text-ink-500 md:px-6">
                   {formatDate(lead.detected_at)}
                 </td>
               </tr>
