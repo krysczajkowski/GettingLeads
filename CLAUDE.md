@@ -68,7 +68,8 @@
 - `computeNextScrapeAt` handles half-hour timezones (Asia/Kolkata UTC+5:30) — uses minute-precision offset calculation
 - `computeNextScrapeAt` is duplicated in `src/app/api/schedule/route.ts` (Next.js) and `azure-scraper/src/lib/schedule.ts` (Azure) — must be kept in sync manually
 - Settings page (`/settings`) Supabase `select` must match actual DB columns — a missing column returns null profile, which triggers the subscription gate redirect to `/billing`
-- Never show Supabase `error.message` to users in Client Components — use generic error strings (GDPR). This includes auth errors (login/signup) to prevent user enumeration
+- Never show Supabase `error.message` to users in Client Components — use generic error strings (GDPR)
 - Never log raw Supabase `error.message` server-side either — log `error.code` only
+- Signup duplicate-email: we chose explicit UX over anti-enumeration — show "account already exists" when Supabase returns empty `identities` array (deliberate tradeoff: B2B SaaS where UX matters more than hiding registrations)
 - Security headers (X-Frame-Options, HSTS, etc.) are configured in `next.config.ts` `headers()` — don't remove
 - `tsc` doesn't delete stale files from `dist/` — always `rm -rf dist` before building azure-scraper (the `prebuild` script handles this)

@@ -49,7 +49,7 @@ export default function SignupPage() {
     setLoading(true)
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -59,6 +59,12 @@ export default function SignupPage() {
 
     if (error) {
       setError('Could not create account. Please try again.')
+      setLoading(false)
+      return
+    }
+
+    if (data.user && data.user.identities?.length === 0) {
+      setError('An account with this email already exists. Try logging in.')
       setLoading(false)
       return
     }
