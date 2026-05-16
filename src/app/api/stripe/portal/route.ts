@@ -23,11 +23,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('stripe_customer_id')
     .eq('id', user.id)
-    .single<Pick<Profile, 'stripe_customer_id'>>()
+    .maybeSingle<Pick<Profile, 'stripe_customer_id'>>()
+
+  if (profileError) {
+    console.error('[portal] profile read failed:', profileError.code)
+    return NextResponse.json({ error: 'Failed to load billing info' }, { status: 500 })
+  }
 
   if (!profile?.stripe_customer_id) {
     return NextResponse.json({ error: 'No subscription found' }, { status: 400 })

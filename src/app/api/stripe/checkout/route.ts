@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     .maybeSingle<Pick<Profile, 'stripe_customer_id'>>()
 
   if (profileError) {
-    console.error('[checkout] profile read failed:', profileError.code, profileError.message)
+    console.error('[checkout] profile read failed:', profileError.code)
     return NextResponse.json({ error: 'Failed to initialize billing' }, { status: 500 })
   }
 
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       .eq('id', user.id)
 
     if (updateError) {
-      console.error('[checkout] admin update failed:', updateError.code, updateError.message)
+      console.error('[checkout] admin update failed:', updateError.code)
       return NextResponse.json({ error: 'Failed to initialize billing' }, { status: 500 })
     }
   }

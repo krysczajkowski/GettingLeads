@@ -102,7 +102,7 @@ export async function POST(request: Request) {
       }
     }
   } catch (err) {
-    console.error('[webhook] handler failed:', err)
+    console.error('[webhook] handler failed:', err instanceof Error ? err.message : String(err))
     return new Response('Internal error', { status: 500 })
   }
 
