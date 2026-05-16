@@ -6,13 +6,16 @@ import { useState } from 'react'
 
 export default function BrandForm({
   initialName,
-  initialDescription,
+  initialOffer,
+  initialTargetPosts,
 }: {
   initialName: string
-  initialDescription: string
+  initialOffer: string
+  initialTargetPosts: string
 }) {
   const [brandName, setBrandName] = useState(initialName)
-  const [brandDescription, setBrandDescription] = useState(initialDescription)
+  const [offer, setOffer] = useState(initialOffer)
+  const [targetPosts, setTargetPosts] = useState(initialTargetPosts)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -39,7 +42,8 @@ export default function BrandForm({
       .from('profiles')
       .update({
         brand_name: brandName.trim(),
-        brand_description: brandDescription.trim(),
+        offer: offer.trim(),
+        target_posts: targetPosts.trim(),
       })
       .eq('id', user.id)
 
@@ -55,6 +59,8 @@ export default function BrandForm({
     router.refresh()
   }
 
+  const inputClass = "w-full rounded-[10px] border border-line-2 bg-white px-3 py-2.5 text-[14px] text-ink-1000 outline-none transition-all duration-[120ms] placeholder:text-ink-400 focus:border-brand focus:shadow-focus"
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex flex-col gap-1.5">
@@ -67,25 +73,43 @@ export default function BrandForm({
           required
           value={brandName}
           onChange={(e) => { setBrandName(e.target.value); setSaved(false) }}
-          className="w-full rounded-[10px] border border-line-2 bg-white px-3 py-2.5 text-[14px] text-ink-1000 outline-none transition-all duration-[120ms] placeholder:text-ink-400 focus:border-brand focus:shadow-focus"
+          className={inputClass}
           placeholder="e.g. EquineBoost"
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="brand-description" className="text-[13.5px] font-medium text-ink-700">
-          Brand description
+        <label htmlFor="offer" className="text-[13.5px] font-medium text-ink-700">
+          What do you offer?
         </label>
-        <textarea
-          id="brand-description"
+        <input
+          id="offer"
+          type="text"
           required
-          rows={3}
-          value={brandDescription}
-          onChange={(e) => { setBrandDescription(e.target.value); setSaved(false) }}
-          className="w-full resize-y rounded-[10px] border border-line-2 bg-white px-3 py-2.5 text-[14px] leading-relaxed text-ink-1000 outline-none transition-all duration-[120ms] placeholder:text-ink-400 focus:border-brand focus:shadow-focus"
-          placeholder="e.g. We sell 3PL services to ecommerce founders shipping out of the US..."
+          maxLength={200}
+          value={offer}
+          onChange={(e) => { setOffer(e.target.value); setSaved(false) }}
+          className={inputClass}
+          placeholder="e.g. House cleaning services in Miami"
         />
-        <span className="text-[12px] text-ink-500">One paragraph is plenty — be specific about who, what, and the moment they need you.</span>
+        <span className="text-[12px] text-ink-500">Keep it short — one sentence is enough.</span>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="target-posts" className="text-[13.5px] font-medium text-ink-700">
+          What posts should we find?
+        </label>
+        <input
+          id="target-posts"
+          type="text"
+          required
+          maxLength={200}
+          value={targetPosts}
+          onChange={(e) => { setTargetPosts(e.target.value); setSaved(false) }}
+          className={inputClass}
+          placeholder="e.g. People looking for a house cleaner"
+        />
+        <span className="text-[12px] text-ink-500">Describe the kind of posts you're looking for in plain words.</span>
       </div>
 
       {error && <p className="text-[13px] text-danger-500">{error}</p>}

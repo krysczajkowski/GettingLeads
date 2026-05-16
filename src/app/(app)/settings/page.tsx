@@ -16,9 +16,9 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('subscription_status, brand_name, brand_description, scrape_hour, scrape_timezone, scrape_days')
+    .select('subscription_status, brand_name, offer, target_posts, scrape_hour, scrape_timezone, scrape_days')
     .eq('id', user.id)
-    .single<Pick<Profile, 'subscription_status' | 'brand_name' | 'brand_description' | 'scrape_hour' | 'scrape_timezone' | 'scrape_days'>>()
+    .single<Pick<Profile, 'subscription_status' | 'brand_name' | 'offer' | 'target_posts' | 'scrape_hour' | 'scrape_timezone' | 'scrape_days'>>()
 
   if (profile?.subscription_status !== 'active') {
     redirect('/billing')
@@ -43,10 +43,11 @@ export default async function SettingsPage() {
           <span className="eyebrow">Step 1</span>
           <h2 className="mt-1 text-[18px] font-semibold tracking-[-0.015em] text-ink-1000">Brand</h2>
         </div>
-        <p className="-mt-1.5 mb-[18px] text-[13.5px] leading-[1.5] text-ink-600">Describe your brand so the AI knows what leads to look for.</p>
+        <p className="-mt-1.5 mb-[18px] text-[13.5px] leading-[1.5] text-ink-600">Tell us about your business so the AI knows what to look for.</p>
         <BrandForm
           initialName={profile.brand_name ?? ''}
-          initialDescription={profile.brand_description ?? ''}
+          initialOffer={profile.offer ?? ''}
+          initialTargetPosts={profile.target_posts ?? ''}
         />
       </section>
 

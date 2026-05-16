@@ -20,14 +20,16 @@ function sanitizePromptInput(value: string, maxLength: number): string {
   return value.slice(0, maxLength).replace(/[\r\n]+/g, ' ')
 }
 
-function buildSystemPrompt(brandName: string, brandDescription: string): string {
+function buildSystemPrompt(brandName: string, offer: string, targetPosts: string): string {
   const safeName = sanitizePromptInput(brandName, 100)
-  const safeDescription = sanitizePromptInput(brandDescription, 200)
+  const safeOffer = sanitizePromptInput(offer, 200)
+  const safeTarget = sanitizePromptInput(targetPosts, 200)
 
   return [
     `You are a lead classifier for the brand "${safeName}".`,
-    safeDescription ? `Brand description: ${safeDescription}` : '',
-    'Classify whether the following Facebook post indicates a potential lead for this brand.',
+    safeOffer ? `They offer: ${safeOffer}.` : '',
+    safeTarget ? `Find posts where: ${safeTarget}.` : '',
+    'Classify whether the following Facebook post is a potential lead for this brand.',
     'Return JSON only: {"match": boolean, "score": number, "category": string, "reason_code": string}.',
     'score is 0.0-1.0. category examples: buying_intent, recommendation_request, problem_report, comparison_shopping.',
     'reason_code examples: explicit_purchase_intent, asking_for_recommendations, expressing_need, comparing_products.',
@@ -40,7 +42,8 @@ function buildSystemPrompt(brandName: string, brandDescription: string): string 
 export async function classifyPost(
   content: string,
   brandName: string,
-  brandDescription: string,
+  offer: string,
+  targetPosts: string,
 ): Promise<ClassificationResult | null> {
   const truncated = content.slice(0, MAX_CONTENT_LENGTH)
 
@@ -49,7 +52,7 @@ export async function classifyPost(
     temperature: 0,
     response_format: { type: 'json_object' },
     messages: [
-      { role: 'system', content: buildSystemPrompt(brandName, brandDescription) },
+      { role: 'system', content: buildSystemPrompt(brandName, offer, targetPosts) },
       { role: 'user', content: truncated },
     ],
   }

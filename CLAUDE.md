@@ -38,6 +38,7 @@
 - Error codes only in logs/DB — never interpolate `error.message` (GDPR: could leak post content)
 - `.maybeSingle()` not `.single()` for existence checks (avoids PGRST116 errors)
 - GPT classification outputs capped at 64 chars per field to prevent content leakage
+- Classifier prompt uses `profiles.offer` ("They offer: X") and `profiles.target_posts` ("Find posts where: Y") — sanitized to 200 chars each; UI `maxLength` matches
 
 ## GDPR (applies everywhere, especially azure-scraper)
 - Post content and author data must NEVER be stored (DB, logs, cache, error messages)
@@ -57,7 +58,7 @@
 - Required env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`
 - Local Stripe webhook testing: `stripe listen --forward-to localhost:3000/api/stripe/webhook`
 - `azure-scraper/local.settings.json` is gitignored — holds secrets for local dev
-- `supabase/migration.sql` sections 7+8 add per-user scheduling columns — must be run before scheduler works
+- `supabase/migration.sql` sections 7+8 add per-user scheduling columns, section 9 replaces `brand_description` with `offer` + `target_posts` — must be run before scheduler works
 - Azure Storage Queue `scrape-jobs` must exist in `gettingleadsstorage` (runtime usually auto-creates on first deploy)
 - Local Azure Functions testing requires Azurite: `npx azurite --silent --location .azurite`
 - `computeNextScrapeAt` handles half-hour timezones (Asia/Kolkata UTC+5:30) — uses minute-precision offset calculation

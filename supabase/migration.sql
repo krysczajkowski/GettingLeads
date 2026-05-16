@@ -11,7 +11,8 @@ create table public.profiles (
   subscription_status text not null default 'inactive',
   subscription_id text,
   brand_name text,
-  brand_description text,
+  offer text,
+  target_posts text,
   retention_days integer not null default 30,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -185,3 +186,13 @@ where scrape_days = '';
 -- Drop the old frequency column (deploy code changes first)
 alter table public.profiles
   drop column if exists scrape_frequency;
+
+-- ============================================================
+-- 9. Replace brand_description with offer + target_posts
+-- ============================================================
+alter table public.profiles
+  add column if not exists offer text,
+  add column if not exists target_posts text;
+
+alter table public.profiles
+  drop column if exists brand_description;

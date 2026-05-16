@@ -7,7 +7,8 @@ export type Profile = {
   subscription_status: SubscriptionStatus
   subscription_id: string | null
   brand_name: string | null
-  brand_description: string | null
+  offer: string | null
+  target_posts: string | null
   retention_days: number
   scrape_hour: number
   scrape_timezone: string

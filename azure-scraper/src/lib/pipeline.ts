@@ -14,7 +14,8 @@ const MIN_CONTENT_LENGTH = 10
 export type UserWithGroups = {
   userId: string
   brandName: string | null
-  brandDescription: string | null
+  offer: string | null
+  targetPosts: string | null
   retentionDays: number
   groups: { url: string }[]
 }
@@ -66,7 +67,7 @@ export async function processUser(
   supabase: SupabaseClient,
   user: UserWithGroups,
 ): Promise<PipelineResult> {
-  const { userId, groups, brandName, brandDescription, retentionDays } = user
+  const { userId, groups, brandName, offer, targetPosts, retentionDays } = user
   const currentMonth = new Date().toISOString().slice(0, 7)
 
   const postsUsed = await getUsage(supabase, userId, currentMonth)
@@ -109,7 +110,8 @@ export async function processUser(
       userId,
       postsForClassification,
       brandName ?? '',
-      brandDescription ?? '',
+      offer ?? '',
+      targetPosts ?? '',
       retentionDays,
     )
 
@@ -149,7 +151,8 @@ async function classifyAndStore(
   userId: string,
   posts: PostForClassification[],
   brandName: string,
-  brandDescription: string,
+  offer: string,
+  targetPosts: string,
   retentionDays: number,
 ): Promise<{ classified: number; leadsInserted: number }> {
   let classified = 0
@@ -158,7 +161,7 @@ async function classifyAndStore(
   for (const post of posts) {
     try {
       const { content, ...postMeta } = post
-      const result = await classifyPost(content, brandName, brandDescription)
+      const result = await classifyPost(content, brandName, offer, targetPosts)
       await rateLimitDelay()
 
       if (!result) continue
@@ -329,7 +332,7 @@ function getYesterday(): string {
 
 async function resolveGroups(
   supabase: SupabaseClient,
-  profiles: { id: string; brand_name: string | null; brand_description: string | null; retention_days: number }[],
+  profiles: { id: string; brand_name: string | null; offer: string | null; target_posts: string | null; retention_days: number }[],
 ): Promise<UserWithGroups[]> {
   const users: UserWithGroups[] = []
 
@@ -348,7 +351,8 @@ async function resolveGroups(
       users.push({
         userId: profile.id,
         brandName: profile.brand_name,
-        brandDescription: profile.brand_description,
+        offer: profile.offer,
+        targetPosts: profile.target_posts,
         retentionDays: profile.retention_days,
         groups,
       })
@@ -363,7 +367,7 @@ export async function fetchActiveUsers(
 ): Promise<UserWithGroups[]> {
   const { data: profiles, error } = await supabase
     .from('profiles')
-    .select('id, brand_name, brand_description, retention_days')
+    .select('id, brand_name, offer, target_posts, retention_days')
     .eq('subscription_status', 'active')
 
   if (error) throw new Error(`Failed to fetch profiles`)
@@ -377,7 +381,7 @@ export async function fetchDueUsers(
 
   const { data: profiles, error } = await supabase
     .from('profiles')
-    .select('id, brand_name, brand_description, retention_days, scrape_hour, scrape_timezone, scrape_days')
+    .select('id, brand_name, offer, target_posts, retention_days, scrape_hour, scrape_timezone, scrape_days')
     .eq('subscription_status', 'active')
     .lte('next_scrape_at', now)
     .or(`scrape_lock_until.is.null,scrape_lock_until.lt.${now}`)

@@ -10,7 +10,8 @@ function isValidMessage(msg: unknown): msg is ScrapeMessage {
     typeof m.userId === 'string' &&
     m.userId.length > 0 &&
     (m.brandName === null || typeof m.brandName === 'string') &&
-    (m.brandDescription === null || typeof m.brandDescription === 'string') &&
+    (m.offer === null || typeof m.offer === 'string') &&
+    (m.targetPosts === null || typeof m.targetPosts === 'string') &&
     typeof m.retentionDays === 'number' &&
     Array.isArray(m.groups) &&
     m.groups.every((g) => typeof g === 'object' && g !== null && typeof (g as Record<string, unknown>).url === 'string') &&
@@ -36,7 +37,8 @@ async function scrapeWorker(message: unknown, context: InvocationContext): Promi
     const result = await processUser(supabase, {
       userId: msg.userId,
       brandName: msg.brandName,
-      brandDescription: msg.brandDescription,
+      offer: msg.offer,
+      targetPosts: msg.targetPosts,
       retentionDays: msg.retentionDays,
       groups: msg.groups,
     })

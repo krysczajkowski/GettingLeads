@@ -67,7 +67,8 @@ async function scheduler(timer: Timer, context: InvocationContext): Promise<void
     messages.push({
       userId: user.userId,
       brandName: user.brandName,
-      brandDescription: user.brandDescription,
+      offer: user.offer,
+      targetPosts: user.targetPosts,
       retentionDays: user.retentionDays,
       groups: user.groups,
       scrapeHour: user.scrapeHour,

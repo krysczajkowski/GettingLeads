@@ -1,7 +1,8 @@
 export type ScrapeMessage = {
   userId: string
   brandName: string | null
-  brandDescription: string | null
+  offer: string | null
+  targetPosts: string | null
   retentionDays: number
   groups: { url: string }[]
   scrapeHour: number

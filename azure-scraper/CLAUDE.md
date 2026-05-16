@@ -61,6 +61,14 @@ Azure Functions v4 Node.js project that scrapes Facebook groups for leads. Uses 
 - Allowed to store: post_url, source_url, score, category, reason_code, content_hash, detected_at, expires_at
 - Content exists only in local variables during processing, discarded immediately
 
+## Classifier Columns on `profiles`
+
+- `brand_name` (text) — brand identity for the GPT system prompt
+- `offer` (text) — "What do you offer?" — feeds GPT as "They offer: {offer}"
+- `target_posts` (text) — "What posts should we find?" — feeds GPT as "Find posts where: {targetPosts}"
+- Both sanitized to 200 chars max by `sanitizePromptInput` in `classifier.ts`
+- Migration: section 9 in `supabase/migration.sql`
+
 ## Schedule Columns on `profiles`
 
 - `scrape_hour` (int, default 6) — hour in user's timezone (0-23)
