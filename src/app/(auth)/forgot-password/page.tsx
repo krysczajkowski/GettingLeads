@@ -5,13 +5,10 @@ import { useState } from 'react'
 import Link from 'next/link'
 import GLLogo from '@/app/components/gl-logo'
 import AuthAside from '../auth-aside'
-import { MailIcon, LockIcon, UserIcon, BuildingIcon, ArrowIcon } from '../auth-icons'
-import { StrengthMeter } from '../strength-meter'
+import { MailIcon, ArrowIcon } from '../auth-icons'
 
-export default function SignupPage() {
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -21,25 +18,30 @@ export default function SignupPage() {
     setError(null)
     setLoading(true)
 
-    const supabase = createClient()
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/callback`,
-      },
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
     })
 
-    if (error) {
-      setError('Could not create account. Please try again.')
+    if (res.status === 429) {
+      setError('Too many attempts. Please wait a minute and try again.')
       setLoading(false)
       return
     }
 
-    if (data.user && data.user.identities?.length === 0) {
-      setError('An account with this email already exists. Try logging in.')
+    if (!res.ok) {
+      setError('Something went wrong. Please try again.')
       setLoading(false)
       return
+    }
+
+    const supabase = createClient()
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/callback?next=/reset-password`,
+    })
+    if (resetError) {
+      console.error('[forgot-password] resetPasswordForEmail failed:', resetError.code)
     }
 
     setSuccess(true)
@@ -53,8 +55,11 @@ export default function SignupPage() {
           <GLLogo size={24} />
           <h1 className="text-[24px] font-semibold tracking-[-0.02em] text-ink-1000">Check your email</h1>
           <p className="text-[15px] leading-relaxed text-ink-600">
-            We sent a confirmation link to <strong className="font-medium text-ink-1000">{email}</strong>. Click it to activate your account.
+            If an account exists for <strong className="font-medium text-ink-1000">{email}</strong>, a password reset link is on its way.
           </p>
+          <Link href="/login" className="mt-2 inline-block text-[13px] font-medium text-brand no-underline hover:underline hover:decoration-brand hover:underline-offset-[3px]">
+            ← Back to login
+          </Link>
         </div>
       </div>
     )
@@ -69,7 +74,7 @@ export default function SignupPage() {
           GettingLeads
         </Link>
         <div className="flex items-center gap-4">
-          <span className="hidden text-[13px] text-ink-600 sm:inline">Already have an account?</span>
+          <span className="hidden text-[13px] text-ink-600 sm:inline">Remember your password?</span>
           <Link href="/login" className="text-[13px] font-medium text-ink-1000 no-underline hover:text-brand">Log in →</Link>
         </div>
       </div>
@@ -90,61 +95,25 @@ export default function SignupPage() {
           />
 
           <div className="relative z-10 w-full max-w-[380px]">
-            {/* Tabs */}
-            <div className="mb-6 inline-flex rounded-full border border-line-1 bg-surface-2 p-1">
-              <Link href="/login" className="rounded-full px-4 py-2 text-[13px] font-medium text-ink-600 no-underline transition-colors duration-200 hover:text-ink-1000">Log in</Link>
-              <span className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink-1000 shadow-[0_1px_0_rgba(11,15,14,0.06),0_2px_4px_rgba(11,15,14,0.04)]">Sign up</span>
-            </div>
-
             {/* Eyebrow */}
             <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-line-1 bg-surface-1 px-2.5 py-1.5 font-mono text-[12px] font-medium uppercase tracking-[0.08em] text-ink-600 animate-[gl-fade-in_600ms_cubic-bezier(0.22,1,0.36,1)_both]">
               <span className="relative h-1.5 w-1.5 rounded-full bg-brand">
                 <span className="absolute -inset-[3px] animate-[gl-pulse-dot_1.6s_ease-in-out_infinite] rounded-full bg-brand opacity-40" />
               </span>
-              14-day free trial · no card
+              Account recovery
             </span>
 
             {/* Headline */}
             <h1 className="mb-3 text-[40px] font-semibold leading-[1.05] tracking-[-0.028em] text-ink-1000 animate-[gl-fade-in_600ms_cubic-bezier(0.22,1,0.36,1)_60ms_both]">
-              Start your <span className="font-serif text-brand" style={{ fontWeight: 400 }}>scanner.</span>
+              Forgot your <span className="font-serif text-brand" style={{ fontWeight: 400 }}>password?</span>
             </h1>
             <p className="mb-8 text-[15px] leading-relaxed text-ink-600 animate-[gl-fade-in_600ms_cubic-bezier(0.22,1,0.36,1)_120ms_both]">
-              Create an account and we&apos;ll have your first leads scored before lunch.
+              Enter the email you signed up with and we&apos;ll send a reset link.
             </p>
 
             {/* Form */}
             <form onSubmit={handleSubmit}>
               <div className="mb-4 flex flex-col gap-4 animate-[gl-fade-in_600ms_cubic-bezier(0.22,1,0.36,1)_180ms_both]">
-                {/* Name + Company row */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="name" className="text-[13px] font-medium text-ink-700">Full name</label>
-                    <div className="relative">
-                      <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500" />
-                      <input
-                        id="name"
-                        type="text"
-                        placeholder="Alex Morgan"
-                        autoComplete="name"
-                        className="h-11 w-full rounded-[10px] border border-line-2 bg-white pl-[38px] pr-3 text-[14px] text-ink-1000 outline-none transition-all duration-200 placeholder:text-ink-400 focus:border-brand focus:shadow-focus"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="company" className="text-[13px] font-medium text-ink-700">Company</label>
-                    <div className="relative">
-                      <BuildingIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500" />
-                      <input
-                        id="company"
-                        type="text"
-                        placeholder="Acme Co."
-                        autoComplete="organization"
-                        className="h-11 w-full rounded-[10px] border border-line-2 bg-white pl-[38px] pr-3 text-[14px] text-ink-1000 outline-none transition-all duration-200 placeholder:text-ink-400 focus:border-brand focus:shadow-focus"
-                      />
-                    </div>
-                  </div>
-                </div>
-
                 {/* Email */}
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="email" className="text-[13px] font-medium text-ink-700">Work email</label>
@@ -162,48 +131,6 @@ export default function SignupPage() {
                     />
                   </div>
                 </div>
-
-                {/* Password */}
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="su-pw" className="text-[13px] font-medium text-ink-700">Password</label>
-                    <span className="font-mono text-[11px] text-ink-500">8+ characters</span>
-                  </div>
-                  <div className="relative">
-                    <LockIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-500" />
-                    <input
-                      id="su-pw"
-                      type={showPw ? 'text' : 'password'}
-                      required
-                      minLength={8}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Pick a strong one"
-                      autoComplete="new-password"
-                      className="h-11 w-full rounded-[10px] border border-line-2 bg-white pl-[38px] pr-16 text-[14px] text-ink-1000 outline-none transition-all duration-200 placeholder:text-ink-400 focus:border-brand focus:shadow-focus"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPw(s => !s)}
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-[6px] border-0 bg-transparent px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.06em] text-ink-500 transition-colors duration-200 hover:text-ink-1000"
-                    >
-                      {showPw ? 'Hide' : 'Show'}
-                    </button>
-                  </div>
-                  <StrengthMeter value={password} />
-                </div>
-
-                {/* Terms checkbox */}
-                <label className="flex cursor-pointer items-start gap-2.5 text-[13px] leading-[1.5] text-ink-700 select-none">
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="auth-check-input mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-[4px] border border-line-3 bg-white transition-all duration-200 checked:border-brand checked:bg-brand"
-                  />
-                  <span>
-                    I agree to the <a href="#" className="text-ink-1000 underline decoration-line-3 underline-offset-[3px] hover:decoration-brand">Terms</a> and <a href="#" className="text-ink-1000 underline decoration-line-3 underline-offset-[3px] hover:decoration-brand">Privacy policy</a>. We only watch public posts — never DMs.
-                  </span>
-                </label>
               </div>
 
               {error && <p className="mb-3 text-[13px] text-danger-500">{error}</p>}
@@ -213,13 +140,13 @@ export default function SignupPage() {
                 disabled={loading}
                 className="mt-2 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] bg-brand text-[14px] font-medium text-fg-on-brand shadow-[0_1px_0_rgba(11,15,14,0.06),0_6px_14px_-4px_rgba(21,179,108,0.4)] transition-all duration-200 hover:-translate-y-px hover:bg-brand-hover hover:shadow-[0_1px_0_rgba(11,15,14,0.06),0_10px_20px_-4px_rgba(21,179,108,0.5)] active:translate-y-0 active:scale-[0.985] disabled:opacity-50 animate-[gl-fade-in_600ms_cubic-bezier(0.22,1,0.36,1)_240ms_both]"
               >
-                {loading ? 'Creating account...' : <>Create account <ArrowIcon className="h-4 w-4" /></>}
+                {loading ? 'Sending...' : <>Send reset link <ArrowIcon className="h-4 w-4" /></>}
               </button>
             </form>
 
             {/* Switch link */}
             <p className="mt-6 text-center text-[13px] text-ink-600 animate-[gl-fade-in_600ms_cubic-bezier(0.22,1,0.36,1)_300ms_both]">
-              Already on GettingLeads?{' '}
+              Remember your password?{' '}
               <Link href="/login" className="ml-1 font-medium text-brand no-underline hover:underline hover:decoration-brand hover:underline-offset-[3px]">Log in</Link>
             </p>
 
@@ -235,7 +162,7 @@ export default function SignupPage() {
         </section>
 
         {/* Right: aside */}
-        <AuthAside mode="signup" />
+        <AuthAside mode="login" />
       </div>
     </div>
   )

@@ -10,8 +10,12 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      return NextResponse.redirect(`${origin}/dashboard`)
+      const next = searchParams.get('next')
+      const destination = next === '/reset-password' ? next : '/dashboard'
+      return NextResponse.redirect(`${origin}${destination}`)
     }
+
+    console.error('[callback] code exchange failed', error.code)
   }
 
   return NextResponse.redirect(`${origin}/login`)
