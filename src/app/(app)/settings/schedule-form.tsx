@@ -1,6 +1,5 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -41,72 +40,6 @@ function parseDays(scrapeDays: string): Set<number> {
     if (n >= 0 && n <= 6) set.add(n)
   }
   return set
-}
-
-const WEEKDAY_MAP: Record<string, number> = {
-  Monday: 0,
-  Tuesday: 1,
-  Wednesday: 2,
-  Thursday: 3,
-  Friday: 4,
-  Saturday: 5,
-  Sunday: 6,
-}
-
-function getLocalWeekday(date: Date, timezone: string): number {
-  const name = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    weekday: 'long',
-  }).format(date)
-  const day = WEEKDAY_MAP[name]
-  if (day === undefined) throw new Error(`Unrecognised weekday: ${name}`)
-  return day
-}
-
-function computeNextScrapeAt(hour: number, timezone: string, scrapeDays: string): string | null {
-  const days = parseDays(scrapeDays)
-  if (days.size === 0) return null
-
-  const now = new Date()
-
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(now)
-
-  const get = (type: string) => parseInt(parts.find((p) => p.type === type)!.value)
-  const localYear = get('year')
-  const localMonth = get('month')
-  const localDay = get('day')
-
-  const noon = new Date(Date.UTC(localYear, localMonth - 1, localDay, 12, 0, 0))
-  const noonParts = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(noon)
-  const noonH = parseInt(noonParts.find((p) => p.type === 'hour')!.value)
-  const noonM = parseInt(noonParts.find((p) => p.type === 'minute')!.value)
-  const offsetMs = (noonH - 12) * 3_600_000 + noonM * 60_000
-
-  const fakeUtc = Date.UTC(localYear, localMonth - 1, localDay, hour, 0, 0)
-  let candidate = new Date(fakeUtc - offsetMs)
-
-  for (let i = 0; i < 7; i++) {
-    const weekday = getLocalWeekday(candidate, timezone)
-    if (days.has(weekday) && candidate.getTime() > now.getTime()) {
-      return candidate.toISOString()
-    }
-    candidate = new Date(candidate.getTime() + 86_400_000)
-  }
-
-  return candidate.toISOString()
 }
 
 const selectClasses = "w-full appearance-none rounded-[10px] border border-line-2 bg-white bg-[url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235A6360' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")] bg-[right_12px_center] bg-no-repeat px-3 py-2.5 pr-[38px] text-[14px] text-ink-1000 outline-none transition-all duration-[120ms] focus:border-brand focus:shadow-focus"
@@ -156,31 +89,19 @@ export default function ScheduleForm({
     setSaved(false)
     setSaving(true)
 
-    const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      setError('Not authenticated')
-      setSaving(false)
-      return
-    }
-
     const daysStr = [...days].sort((a, b) => a - b).join(',')
-    const nextScrapeAt = days.size === 0 ? null : computeNextScrapeAt(hour, timezone, daysStr)
 
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
+    const res = await fetch('/api/schedule', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         scrape_hour: hour,
         scrape_timezone: timezone,
         scrape_days: daysStr,
-        next_scrape_at: nextScrapeAt,
-      })
-      .eq('id', user.id)
+      }),
+    })
 
-    if (updateError) {
+    if (!res.ok) {
       setError('Failed to save schedule. Please try again.')
       setSaving(false)
       return
