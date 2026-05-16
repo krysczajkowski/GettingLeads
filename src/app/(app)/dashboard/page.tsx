@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Profile, Lead, Usage } from '@/lib/types'
+import { canAccessApp, trialDaysRemaining, TRIAL_POST_CAP } from '@/lib/subscription'
 import LeadsTable from './leads-table'
 
 const POSTS_LIMIT = 5_000
@@ -17,11 +18,11 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('subscription_status, brand_name')
+    .select('subscription_status, brand_name, trial_ends_at, trial_posts_used')
     .eq('id', user.id)
-    .single<Pick<Profile, 'subscription_status' | 'brand_name'>>()
+    .single<Pick<Profile, 'subscription_status' | 'brand_name' | 'trial_ends_at' | 'trial_posts_used'>>()
 
-  if (profile?.subscription_status !== 'active') {
+  if (!profile || !canAccessApp(profile.subscription_status)) {
     redirect('/billing')
   }
 
@@ -42,18 +43,33 @@ export default async function DashboardPage() {
     )
   }
 
-  const now = new Date()
-  const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
+  const isTrial = profile.subscription_status === 'trialing'
+  const trialPostsUsed = profile.trial_posts_used
+  const trialCapHit = isTrial && trialPostsUsed >= TRIAL_POST_CAP
+  const daysLeft = isTrial ? trialDaysRemaining(profile.trial_ends_at) : 0
 
-  const { data: usage } = await supabase
-    .from('usage')
-    .select('posts_processed')
-    .eq('user_id', user.id)
-    .eq('month', currentMonth)
-    .maybeSingle<Pick<Usage, 'posts_processed'>>()
+  let postsProcessed = 0
+  let usagePercent = 0
+  let postsLimit = POSTS_LIMIT
 
-  const postsProcessed = usage?.posts_processed ?? 0
-  const usagePercent = Math.min(Math.round((postsProcessed / POSTS_LIMIT) * 100), 100)
+  if (isTrial) {
+    postsProcessed = trialPostsUsed
+    postsLimit = TRIAL_POST_CAP
+    usagePercent = Math.min(Math.round((trialPostsUsed / TRIAL_POST_CAP) * 100), 100)
+  } else {
+    const now = new Date()
+    const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
+
+    const { data: usage } = await supabase
+      .from('usage')
+      .select('posts_processed')
+      .eq('user_id', user.id)
+      .eq('month', currentMonth)
+      .maybeSingle<Pick<Usage, 'posts_processed'>>()
+
+    postsProcessed = usage?.posts_processed ?? 0
+    usagePercent = Math.min(Math.round((postsProcessed / POSTS_LIMIT) * 100), 100)
+  }
 
   const { data: leads, count } = await supabase
     .from('leads')
@@ -99,19 +115,50 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {/* Trial upgrade banner */}
+      {isTrial && (
+        <div className={`mb-4 flex items-center justify-between rounded-[16px] border px-6 py-4 shadow-card ${trialCapHit ? 'border-amber-200 bg-amber-50' : 'border-blue-200 bg-blue-50'}`}>
+          <div className="flex items-center gap-3">
+            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${trialCapHit ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
+              {trialCapHit ? (
+                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              ) : (
+                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              )}
+            </div>
+            <div>
+              <p className={`text-[14px] font-medium ${trialCapHit ? 'text-amber-900' : 'text-blue-900'}`}>
+                {trialCapHit
+                  ? 'Trial post limit reached — scraping is paused.'
+                  : `Free trial · ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`}
+              </p>
+              <p className={`text-[13px] ${trialCapHit ? 'text-amber-700' : 'text-blue-700'}`}>
+                Upgrade to Pro for 5,000 posts/month and unlimited access.
+              </p>
+            </div>
+          </div>
+          <a
+            href="/billing"
+            className="shrink-0 rounded-[8px] bg-ink-1000 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-ink-900"
+          >
+            Upgrade
+          </a>
+        </div>
+      )}
+
       {/* Usage card */}
       <div className="mb-4 rounded-[16px] border border-line-1 bg-white p-6 shadow-card transition-shadow duration-[200ms] hover:shadow-card-hover">
         <div className="flex items-baseline justify-between">
           <div>
-            <span className="eyebrow">This month</span>
+            <span className="eyebrow">{isTrial ? 'Trial usage' : 'This month'}</span>
             <h2 className="mt-1 text-[18px] font-semibold tracking-[-0.015em] text-ink-1000">Posts processed</h2>
           </div>
-          <span className="font-mono text-[12px] tabular-nums text-ink-600">{usagePercent}% of plan</span>
+          <span className="font-mono text-[12px] tabular-nums text-ink-600">{usagePercent}% of {isTrial ? 'trial' : 'plan'}</span>
         </div>
         <div className="mb-3.5 mt-[18px] flex items-end">
           <span className="text-[44px] font-semibold leading-none tracking-[-0.025em] tabular-nums text-ink-1000">
             {postsProcessed.toLocaleString()}
-            <span className="ml-1 text-[18px] font-medium text-ink-500">/ {POSTS_LIMIT.toLocaleString()}</span>
+            <span className="ml-1 text-[18px] font-medium text-ink-500">/ {postsLimit.toLocaleString()}</span>
           </span>
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-surface-3">

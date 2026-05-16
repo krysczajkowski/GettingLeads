@@ -4,6 +4,9 @@ export type ScrapeMessage = {
   offer: string | null
   targetPosts: string | null
   retentionDays: number
+  subscriptionStatus: string
+  trialPostsUsed: number
+  trialEndsAt: string | null
   groups: { url: string }[]
   scrapeHour: number
   scrapeTimezone: string

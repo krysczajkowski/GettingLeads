@@ -27,13 +27,13 @@ Azure Functions v4 Node.js project that scrapes Facebook groups for leads. Uses 
 3. Enqueues a `ScrapeMessage` per user to the `scrape-jobs` queue
 4. Worker picks up one message, calls `processUser()`, clears the lock on completion
 
-**Pipeline flow** (`processUser` — unchanged):
-1. Check monthly usage limit (5,000 posts/month per user)
+**Pipeline flow** (`processUser`):
+1. Check trial expiry and trial post cap (200 lifetime for trialing users), then monthly usage limit (5,000 posts/month)
 2. Scrape groups via BrightData API (trigger → poll → download)
 3. Filter posts by date and minimum content length
 4. Classify each post with OpenAI (is it a lead?)
 5. Deduplicate by content_hash, insert leads into Supabase
-6. Update usage counters and scrape logs
+6. Update usage counters, trial_posts_used (for trialing users), and scrape logs
 
 **Key modules:**
 - `src/index.ts` — barrel entry point, imports all function registrations
@@ -77,6 +77,13 @@ Azure Functions v4 Node.js project that scrapes Facebook groups for leads. Uses 
 - `next_scrape_at` (timestamptz, nullable) — scheduler polls `WHERE next_scrape_at <= now()`; null = paused
 - `scrape_lock_until` (timestamptz) — 15-min TTL lock, prevents double-enqueue, self-heals on worker crash
 - Migration: sections 7+8 in `supabase/migration.sql` — run in Supabase SQL Editor
+
+## Trial Columns on `profiles`
+
+- `trial_ends_at` (timestamptz, nullable) — set to `now() + 7 days` by `handle_new_user()` trigger
+- `trial_posts_used` (integer, default 0) — lifetime counter, incremented by `incrementTrialUsage` in pipeline.ts
+- `TRIAL_POST_CAP = 200` in pipeline.ts — must match `src/lib/subscription.ts` in the Next.js project
+- Migration: section 10 in `supabase/migration.sql`
 
 ## TypeScript Config
 

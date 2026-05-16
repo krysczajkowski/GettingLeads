@@ -13,6 +13,9 @@ function isValidMessage(msg: unknown): msg is ScrapeMessage {
     (m.offer === null || typeof m.offer === 'string') &&
     (m.targetPosts === null || typeof m.targetPosts === 'string') &&
     typeof m.retentionDays === 'number' &&
+    typeof m.subscriptionStatus === 'string' &&
+    typeof m.trialPostsUsed === 'number' &&
+    (m.trialEndsAt === null || typeof m.trialEndsAt === 'string') &&
     Array.isArray(m.groups) &&
     m.groups.every((g) => typeof g === 'object' && g !== null && typeof (g as Record<string, unknown>).url === 'string') &&
     typeof m.scrapeHour === 'number' &&
@@ -40,6 +43,9 @@ async function scrapeWorker(message: unknown, context: InvocationContext): Promi
       offer: msg.offer,
       targetPosts: msg.targetPosts,
       retentionDays: msg.retentionDays,
+      subscriptionStatus: msg.subscriptionStatus,
+      trialPostsUsed: msg.trialPostsUsed,
+      trialEndsAt: msg.trialEndsAt,
       groups: msg.groups,
     })
 

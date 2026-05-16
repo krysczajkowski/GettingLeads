@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Profile } from '@/lib/types'
+import { trialDaysRemaining, TRIAL_POST_CAP } from '@/lib/subscription'
 import CheckoutButton from './checkout-button'
 import PortalButton from './portal-button'
 
@@ -15,11 +16,16 @@ export default async function BillingPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('subscription_status')
+    .select('subscription_status, trial_ends_at, trial_posts_used')
     .eq('id', user.id)
-    .single<Pick<Profile, 'subscription_status'>>()
+    .single<Pick<Profile, 'subscription_status' | 'trial_ends_at' | 'trial_posts_used'>>()
 
   const isActive = profile?.subscription_status === 'active'
+  const isTrial = profile?.subscription_status === 'trialing'
+  const daysLeft = isTrial ? trialDaysRemaining(profile.trial_ends_at) : 0
+  const trialPostsUsed = profile?.trial_posts_used ?? 0
+  const trialUsagePercent = Math.min(Math.round((trialPostsUsed / TRIAL_POST_CAP) * 100), 100)
+  const trialCapHit = trialPostsUsed >= TRIAL_POST_CAP
 
   return (
     <div>
@@ -53,6 +59,66 @@ export default async function BillingPage() {
             </div>
           </div>
         </>
+      ) : isTrial ? (
+        <div className="mb-4 rounded-[16px] border border-blue-200 bg-gradient-to-b from-blue-50 to-white p-7 shadow-card">
+          <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-[10px] bg-blue-100 text-blue-700">
+            <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-ink-1000">
+            Free trial · {daysLeft} day{daysLeft !== 1 ? 's' : ''} remaining
+          </h2>
+          <p className="mt-1.5 text-[14px] leading-[1.5] text-ink-600">
+            You have access to the full platform during your trial.
+          </p>
+
+          <div className="mt-5 rounded-[12px] border border-line-1 bg-white p-4">
+            <div className="flex items-baseline justify-between">
+              <span className="font-mono text-[11px] font-medium uppercase tracking-[0.06em] text-ink-500">Trial posts used</span>
+              <span className="font-mono text-[12px] tabular-nums text-ink-600">{trialUsagePercent}%</span>
+            </div>
+            <div className="mb-2 mt-2 flex items-end">
+              <span className="text-[28px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-ink-1000">
+                {trialPostsUsed.toLocaleString()}
+                <span className="ml-1 text-[14px] font-medium text-ink-500">/ {TRIAL_POST_CAP.toLocaleString()}</span>
+              </span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-surface-3">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600 transition-[width] duration-1000"
+                style={{ width: `${trialUsagePercent}%` }}
+              />
+            </div>
+            {trialCapHit && (
+              <p className="mt-2.5 text-[13px] font-medium text-amber-700">
+                Trial post limit reached — scraping is paused.
+              </p>
+            )}
+          </div>
+
+          <div className="mt-5">
+            <h3 className="text-[16px] font-semibold text-ink-1000">Upgrade to GettingLeads Pro</h3>
+            <p className="mt-1 text-[30px] font-bold tracking-[-0.02em] text-ink-1000">
+              $50<span className="text-[14px] font-normal text-ink-500">/month</span>
+            </p>
+            <ul className="mt-3 space-y-2 text-[14px] text-ink-700">
+              <li className="flex items-start gap-2.5">
+                <svg className="mt-1 shrink-0 text-brand" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+                5,000 posts processed per month
+              </li>
+              <li className="flex items-start gap-2.5">
+                <svg className="mt-1 shrink-0 text-brand" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+                Up to 10 Facebook groups monitored
+              </li>
+              <li className="flex items-start gap-2.5">
+                <svg className="mt-1 shrink-0 text-brand" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+                Daily AI-powered lead classification
+              </li>
+            </ul>
+            <div className="mt-5">
+              <CheckoutButton />
+            </div>
+          </div>
+        </div>
       ) : (
         <div className="mb-4 rounded-[16px] border border-line-1 bg-white p-5 text-center shadow-card md:p-8">
           <h2 className="text-[20px] font-semibold text-ink-1000">GettingLeads Pro</h2>

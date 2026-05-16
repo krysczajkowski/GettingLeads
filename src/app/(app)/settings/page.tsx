@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Profile, Group } from '@/lib/types'
+import { canAccessApp } from '@/lib/subscription'
 import BrandForm from './brand-form'
 import GroupList from './group-list'
 import ScheduleForm from './schedule-form'
@@ -20,7 +21,7 @@ export default async function SettingsPage() {
     .eq('id', user.id)
     .single<Pick<Profile, 'subscription_status' | 'brand_name' | 'offer' | 'target_posts' | 'scrape_hour' | 'scrape_timezone' | 'scrape_days'>>()
 
-  if (profile?.subscription_status !== 'active') {
+  if (!profile || !canAccessApp(profile.subscription_status)) {
     redirect('/billing')
   }
 

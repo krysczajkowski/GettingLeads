@@ -9,6 +9,7 @@ import {
 import { classifyPost, rateLimitDelay } from './classifier'
 
 const MONTHLY_POST_LIMIT = 5_000
+const TRIAL_POST_CAP = 200
 const MIN_CONTENT_LENGTH = 10
 
 export type UserWithGroups = {
@@ -17,6 +18,9 @@ export type UserWithGroups = {
   offer: string | null
   targetPosts: string | null
   retentionDays: number
+  subscriptionStatus: string
+  trialPostsUsed: number
+  trialEndsAt: string | null
   groups: { url: string }[]
 }
 
@@ -70,12 +74,26 @@ export async function processUser(
   const { userId, groups, brandName, offer, targetPosts, retentionDays } = user
   const currentMonth = new Date().toISOString().slice(0, 7)
 
+  if (user.subscriptionStatus === 'trialing') {
+    const trialExpired = !user.trialEndsAt || new Date(user.trialEndsAt) < new Date()
+    if (trialExpired) {
+      await supabase.from('profiles').update({ subscription_status: 'inactive' }).eq('id', userId).eq('subscription_status', 'trialing')
+      return { userId, status: 'skipped_usage', postsFetched: 0, postsFiltered: 0, postsClassified: 0, leadsFound: 0 }
+    }
+    if (user.trialPostsUsed >= TRIAL_POST_CAP) {
+      return { userId, status: 'skipped_usage', postsFetched: 0, postsFiltered: 0, postsClassified: 0, leadsFound: 0 }
+    }
+  }
+
   const postsUsed = await getUsage(supabase, userId, currentMonth)
   if (postsUsed >= MONTHLY_POST_LIMIT) {
     return { userId, status: 'skipped_usage', postsFetched: 0, postsFiltered: 0, postsClassified: 0, leadsFound: 0 }
   }
 
-  const remaining = MONTHLY_POST_LIMIT - postsUsed
+  const trialRemaining = user.subscriptionStatus === 'trialing'
+    ? TRIAL_POST_CAP - user.trialPostsUsed
+    : Infinity
+  const remaining = Math.min(MONTHLY_POST_LIMIT - postsUsed, trialRemaining)
 
   const validGroups = groups.filter((g) => validateGroupUrl(g.url))
   if (validGroups.length === 0) {
@@ -125,6 +143,9 @@ export async function processUser(
 
     if (postsFiltered > 0) {
       await incrementUsage(supabase, userId, currentMonth, postsFiltered)
+      if (user.subscriptionStatus === 'trialing') {
+        await incrementTrialUsage(supabase, userId, postsFiltered)
+      }
     }
 
     return {
@@ -288,6 +309,27 @@ async function incrementUsage(
   if (error) throw new Error(`Failed to increment usage`)
 }
 
+async function incrementTrialUsage(
+  supabase: SupabaseClient,
+  userId: string,
+  additionalPosts: number,
+): Promise<void> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('trial_posts_used')
+    .eq('id', userId)
+    .maybeSingle()
+
+  const current = profile?.trial_posts_used ?? 0
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ trial_posts_used: current + additionalPosts })
+    .eq('id', userId)
+
+  if (error) throw new Error('Failed to increment trial usage')
+}
+
 async function createScrapeLog(
   supabase: SupabaseClient,
   userId: string,
@@ -332,7 +374,7 @@ function getYesterday(): string {
 
 async function resolveGroups(
   supabase: SupabaseClient,
-  profiles: { id: string; brand_name: string | null; offer: string | null; target_posts: string | null; retention_days: number }[],
+  profiles: { id: string; brand_name: string | null; offer: string | null; target_posts: string | null; retention_days: number; subscription_status: string; trial_posts_used: number; trial_ends_at: string | null }[],
 ): Promise<UserWithGroups[]> {
   const users: UserWithGroups[] = []
 
@@ -354,6 +396,9 @@ async function resolveGroups(
         offer: profile.offer,
         targetPosts: profile.target_posts,
         retentionDays: profile.retention_days,
+        subscriptionStatus: profile.subscription_status,
+        trialPostsUsed: profile.trial_posts_used,
+        trialEndsAt: profile.trial_ends_at,
         groups,
       })
     }
@@ -367,8 +412,8 @@ export async function fetchActiveUsers(
 ): Promise<UserWithGroups[]> {
   const { data: profiles, error } = await supabase
     .from('profiles')
-    .select('id, brand_name, offer, target_posts, retention_days')
-    .eq('subscription_status', 'active')
+    .select('id, brand_name, offer, target_posts, retention_days, subscription_status, trial_posts_used, trial_ends_at')
+    .in('subscription_status', ['active', 'trialing'])
 
   if (error) throw new Error(`Failed to fetch profiles`)
   return resolveGroups(supabase, profiles ?? [])
@@ -381,8 +426,8 @@ export async function fetchDueUsers(
 
   const { data: profiles, error } = await supabase
     .from('profiles')
-    .select('id, brand_name, offer, target_posts, retention_days, scrape_hour, scrape_timezone, scrape_days')
-    .eq('subscription_status', 'active')
+    .select('id, brand_name, offer, target_posts, retention_days, scrape_hour, scrape_timezone, scrape_days, subscription_status, trial_posts_used, trial_ends_at')
+    .in('subscription_status', ['active', 'trialing'])
     .lte('next_scrape_at', now)
     .or(`scrape_lock_until.is.null,scrape_lock_until.lt.${now}`)
 

@@ -22,7 +22,9 @@
 - Auth guard pattern: `supabase.auth.getUser()` → redirect if no user (per-page, and also in layout as defense-in-depth)
 - Proxy (`src/proxy.ts`): uses `getClaims()` for local JWT verification (no network call); `getUser()` is only in Server Components
 - `@supabase/ssr` v0.10.3+: `setAll(cookiesToSet, headers)` — second `headers` param must be forwarded to response in proxy, ignored in server client
-- Subscription gate: `profile.subscription_status !== 'active'` → redirect to `/billing` (per-page)
+- Subscription gate: `canAccessApp(status)` from `@/lib/subscription.ts` — returns true for `'active'` and `'trialing'`; used in `(app)/layout.tsx` (nav visibility + trial expiry flip) and per-page in dashboard/settings
+- Trial expiry auto-flip lives in `(app)/layout.tsx` only — uses `createAdminClient()` with `.eq('subscription_status', 'trialing')` guard to avoid overwriting Stripe webhook writes
+- `TRIAL_POST_CAP = 200` is duplicated in `src/lib/subscription.ts` (Next.js) and `azure-scraper/src/lib/pipeline.ts` (Azure) — must be kept in sync manually (separate TS projects, can't share)
 - Next.js Link prefetch can trigger server-side redirects, causing infinite loops — don't render `<Link>` to gated pages for users who would be redirected
 
 ## Azure Scraper (`azure-scraper/`)
@@ -59,6 +61,8 @@
 - Local Stripe webhook testing: `stripe listen --forward-to localhost:3000/api/stripe/webhook`
 - `azure-scraper/local.settings.json` is gitignored — holds secrets for local dev
 - `supabase/migration.sql` sections 7+8 add per-user scheduling columns, section 9 replaces `brand_description` with `offer` + `target_posts` — must be run before scheduler works
+- `supabase/migration.sql` section 10 adds free trial columns (`trial_ends_at`, `trial_posts_used`) and updates `handle_new_user()` trigger — must be run before trial feature works
+- Partial index `idx_profiles_next_scrape` covers `subscription_status in ('active', 'trialing')` — must be updated if new statuses need scraping
 - Azure Storage Queue `scrape-jobs` must exist in `gettingleadsstorage` (runtime usually auto-creates on first deploy)
 - Local Azure Functions testing requires Azurite: `npx azurite --silent --location .azurite`
 - `computeNextScrapeAt` handles half-hour timezones (Asia/Kolkata UTC+5:30) — uses minute-precision offset calculation

@@ -1,4 +1,4 @@
-export type SubscriptionStatus = 'active' | 'inactive' | 'canceled' | 'past_due'
+export type SubscriptionStatus = 'active' | 'trialing' | 'inactive' | 'canceled' | 'past_due'
 
 export type Profile = {
   id: string
@@ -15,6 +15,8 @@ export type Profile = {
   scrape_days: string
   next_scrape_at: string | null
   scrape_lock_until: string | null
+  trial_ends_at: string | null
+  trial_posts_used: number
   created_at: string
   updated_at: string
 }

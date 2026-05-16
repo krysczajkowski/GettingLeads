@@ -196,3 +196,38 @@ alter table public.profiles
 
 alter table public.profiles
   drop column if exists brand_description;
+
+-- ============================================================
+-- 10. Free trial
+-- ============================================================
+alter table public.profiles
+  add column if not exists trial_ends_at timestamptz,
+  add column if not exists trial_posts_used integer not null default 0;
+
+-- Backfill: existing inactive users get a fresh 7-day trial
+update public.profiles
+set
+  subscription_status = 'trialing',
+  trial_ends_at       = now() + interval '7 days'
+where subscription_status = 'inactive';
+
+-- New users: trigger sets trialing + trial_ends_at
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, email, subscription_status, trial_ends_at)
+  values (
+    new.id,
+    new.email,
+    'trialing',
+    now() + interval '7 days'
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- Extend the partial scrape-scheduler index to include trialing users
+drop index if exists idx_profiles_next_scrape;
+create index idx_profiles_next_scrape
+  on public.profiles (next_scrape_at)
+  where subscription_status in ('active', 'trialing');

@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import type { Profile } from '@/lib/types'
+import { canAccessApp, isTrialExpired } from '@/lib/subscription'
 import SignOutButton from './components/sign-out-button'
 import NavItem from './components/nav-item'
 import MobileNav from './components/mobile-nav'
@@ -50,11 +52,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('subscription_status')
+    .select('subscription_status, trial_ends_at')
     .eq('id', user.id)
-    .single<Pick<Profile, 'subscription_status'>>()
+    .single<Pick<Profile, 'subscription_status' | 'trial_ends_at'>>()
 
-  const isActive = profile?.subscription_status === 'active'
+  if (profile?.subscription_status === 'trialing' && isTrialExpired(profile.trial_ends_at)) {
+    const admin = createAdminClient()
+    await admin.from('profiles').update({ subscription_status: 'inactive' }).eq('id', user.id).eq('subscription_status', 'trialing')
+    redirect('/billing')
+  }
+
+  const isActive = canAccessApp(profile?.subscription_status ?? 'inactive')
   const initial = (user.email ?? 'U')[0].toUpperCase()
 
   return (
