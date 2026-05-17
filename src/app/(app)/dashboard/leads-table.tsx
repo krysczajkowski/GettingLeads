@@ -43,14 +43,24 @@ function isSafeUrl(url: string): boolean {
 
 type Filter = 'all' | '90+' | '80-89'
 
+function formatNextScrape(nextScrapeAt: string | null): string {
+  if (!nextScrapeAt) return 'Your scrape schedule is paused.'
+  const date = new Date(nextScrapeAt)
+  const now = new Date()
+  if (date <= now) return 'Your next scrape is queued and will run shortly.'
+  return `Next scrape: ${date.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}.`
+}
+
 export default function LeadsTable({
   initialLeads,
   totalCount,
   pageSize,
+  nextScrapeAt,
 }: {
   initialLeads: LeadRow[]
   totalCount: number
   pageSize: number
+  nextScrapeAt: string | null
 }) {
   const [leads, setLeads] = useState<LeadRow[]>(initialLeads)
   const [loading, setLoading] = useState(false)
@@ -95,7 +105,7 @@ export default function LeadsTable({
   if (leads.length === 0) {
     return (
       <div className="rounded-[16px] border border-line-1 bg-white p-8 text-center shadow-card">
-        <p className="text-[15px] text-ink-600">No leads found yet. Your daily scrape runs at 6 AM UTC — check back tomorrow.</p>
+        <p className="text-[15px] text-ink-600">No leads found yet. {formatNextScrape(nextScrapeAt)}</p>
       </div>
     )
   }

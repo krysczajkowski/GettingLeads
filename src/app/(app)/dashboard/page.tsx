@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import type { Profile, Lead, Usage } from '@/lib/types'
 import { canAccessApp, trialDaysRemaining, TRIAL_POST_CAP } from '@/lib/subscription'
 import LeadsTable from './leads-table'
+import ScrapeNowButton from './scrape-now-button'
 
 const POSTS_LIMIT = 5_000
 const LEADS_PAGE_SIZE = 20
@@ -18,9 +19,9 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('subscription_status, brand_name, trial_ends_at, trial_posts_used')
+    .select('subscription_status, brand_name, trial_ends_at, trial_posts_used, scrape_lock_until, next_scrape_at')
     .eq('id', user.id)
-    .single<Pick<Profile, 'subscription_status' | 'brand_name' | 'trial_ends_at' | 'trial_posts_used'>>()
+    .single<Pick<Profile, 'subscription_status' | 'brand_name' | 'trial_ends_at' | 'trial_posts_used' | 'scrape_lock_until' | 'next_scrape_at'>>()
 
   if (!profile || !canAccessApp(profile.subscription_status)) {
     redirect('/billing')
@@ -57,6 +58,16 @@ export default async function DashboardPage() {
     postsProcessed = usage?.posts_processed ?? 0
     usagePercent = Math.min(Math.round((postsProcessed / POSTS_LIMIT) * 100), 100)
   }
+
+  const { count: activeGroupCount } = await supabase
+    .from('groups')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+
+  const hasActiveGroups = (activeGroupCount ?? 0) > 0
+  const initialLocked = !!profile.scrape_lock_until && new Date(profile.scrape_lock_until) > new Date()
+  const initialQueued = !initialLocked && !!profile.next_scrape_at && new Date(profile.next_scrape_at) <= new Date()
 
   const { data: leads, count } = await supabase
     .from('leads')
@@ -135,12 +146,20 @@ export default async function DashboardPage() {
 
       {/* Usage card */}
       <div className="mb-4 rounded-[16px] border border-line-1 bg-white p-6 shadow-card transition-shadow duration-[200ms] hover:shadow-card-hover">
-        <div className="flex items-baseline justify-between">
+        <div className="flex items-start justify-between">
           <div>
             <span className="eyebrow">{isTrial ? 'Trial usage' : 'This month'}</span>
             <h2 className="mt-1 text-[18px] font-semibold tracking-[-0.015em] text-ink-1000">Posts processed</h2>
           </div>
-          <span className="font-mono text-[12px] tabular-nums text-ink-600">{usagePercent}% of {isTrial ? 'trial' : 'plan'}</span>
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[12px] tabular-nums text-ink-600">{usagePercent}% of {isTrial ? 'trial' : 'plan'}</span>
+            <ScrapeNowButton
+              initialLocked={initialLocked}
+              initialQueued={initialQueued}
+              trialCapHit={trialCapHit}
+              hasActiveGroups={hasActiveGroups}
+            />
+          </div>
         </div>
         <div className="mb-3.5 mt-[18px] flex items-end">
           <span className="text-[44px] font-semibold leading-none tracking-[-0.025em] tabular-nums text-ink-1000">
@@ -162,6 +181,7 @@ export default async function DashboardPage() {
           initialLeads={(leads as Pick<Lead, 'id' | 'post_url' | 'source_url' | 'score' | 'category' | 'reason_code' | 'detected_at'>[]) ?? []}
           totalCount={totalLeads}
           pageSize={LEADS_PAGE_SIZE}
+          nextScrapeAt={profile.next_scrape_at}
         />
       </div>
     </div>
