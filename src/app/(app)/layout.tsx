@@ -52,9 +52,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('subscription_status, trial_ends_at')
+    .select('subscription_status, trial_ends_at, brand_name')
     .eq('id', user.id)
-    .single<Pick<Profile, 'subscription_status' | 'trial_ends_at'>>()
+    .single<Pick<Profile, 'subscription_status' | 'trial_ends_at' | 'brand_name'>>()
 
   if (profile?.subscription_status === 'trialing' && isTrialExpired(profile.trial_ends_at)) {
     const admin = createAdminClient()
@@ -63,11 +63,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   const isActive = canAccessApp(profile?.subscription_status ?? 'inactive')
+  const showDashboard = isActive && !!profile?.brand_name
   const initial = (user.email ?? 'U')[0].toUpperCase()
 
   return (
     <div className="flex min-h-screen flex-col bg-surface-1 md:flex-row">
-      <MobileNav isActive={isActive} email={user.email ?? ''} initial={initial} />
+      <MobileNav isActive={isActive} showDashboard={showDashboard} email={user.email ?? ''} initial={initial} />
       <aside className="sticky top-0 hidden h-screen w-[232px] flex-col border-r border-line-1 bg-white px-4 py-[22px] md:flex">
         {/* Brand */}
         <div className="flex items-center gap-2.5 px-2 pb-[18px]">
@@ -82,11 +83,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         {/* Nav */}
         <nav className="flex flex-col gap-px">
+          {showDashboard && (
+            <NavItem href="/dashboard" icon={<DashIcon />}>Dashboard</NavItem>
+          )}
           {isActive && (
-            <>
-              <NavItem href="/dashboard" icon={<DashIcon />}>Dashboard</NavItem>
-              <NavItem href="/settings" icon={<CogIcon />}>Settings</NavItem>
-            </>
+            <NavItem href="/settings" icon={<CogIcon />}>Settings</NavItem>
           )}
           <NavItem href="/billing" icon={<CardIcon />}>Billing</NavItem>
         </nav>

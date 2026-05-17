@@ -27,20 +27,7 @@ export default async function DashboardPage() {
   }
 
   if (!profile.brand_name) {
-    return (
-      <div>
-        <div className="mb-7 flex flex-col gap-2">
-          <span className="eyebrow">Overview</span>
-          <h1 className="text-[28px] font-semibold leading-[1.05] tracking-[-0.025em] text-ink-1000 md:text-[36px]">Dashboard</h1>
-        </div>
-        <div className="rounded-[16px] border border-line-1 bg-white p-8 text-center shadow-card">
-          <p className="text-[15px] text-ink-600">
-            Get started by setting up your brand and adding Facebook groups in{' '}
-            <a href="/settings" className="font-medium text-brand hover:text-brand-hover">Settings</a>.
-          </p>
-        </div>
-      </div>
-    )
+    redirect('/onboarding')
   }
 
   const isTrial = profile.subscription_status === 'trialing'

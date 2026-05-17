@@ -23,6 +23,8 @@
 - Proxy (`src/proxy.ts`): uses `getClaims()` for local JWT verification (no network call); `getUser()` is only in Server Components
 - `@supabase/ssr` v0.10.3+: `setAll(cookiesToSet, headers)` — second `headers` param must be forwarded to response in proxy, ignored in server client
 - Subscription gate: `canAccessApp(status)` from `@/lib/subscription.ts` — returns true for `'active'` and `'trialing'`; used in `(app)/layout.tsx` (nav visibility + trial expiry flip) and per-page in dashboard/settings
+- Onboarding gate: `brand_name` being null = onboarding incomplete; dashboard redirects to `/onboarding`; layout hides Dashboard nav link until `brand_name` is set (prevents `<Link>` prefetch redirect loop)
+- Form components (`brand-form.tsx`, `schedule-form.tsx`) accept optional `onSuccessHref?: string` — when provided, `router.push()` to that URL on save instead of showing "Saved" flash; used by onboarding, ignored by settings
 - Trial expiry auto-flip lives in `(app)/layout.tsx` only — uses `createAdminClient()` with `.eq('subscription_status', 'trialing')` guard to avoid overwriting Stripe webhook writes
 - `TRIAL_POST_CAP = 200` is duplicated in `src/lib/subscription.ts` (Next.js) and `azure-scraper/src/lib/pipeline.ts` (Azure) — must be kept in sync manually (separate TS projects, can't share)
 - Next.js Link prefetch can trigger server-side redirects, causing infinite loops — don't render `<Link>` to gated pages for users who would be redirected
@@ -73,3 +75,4 @@
 - Signup duplicate-email: we chose explicit UX over anti-enumeration — show "account already exists" when Supabase returns empty `identities` array (deliberate tradeoff: B2B SaaS where UX matters more than hiding registrations)
 - Security headers (X-Frame-Options, HSTS, etc.) are configured in `next.config.ts` `headers()` — don't remove
 - `tsc` doesn't delete stale files from `dist/` — always `rm -rf dist` before building azure-scraper (the `prebuild` script handles this)
+- When adding new protected routes under `(app)/`, also add them to `isProtectedRoute` in `proxy.ts` — otherwise unauthenticated users won't be redirected to `/login`

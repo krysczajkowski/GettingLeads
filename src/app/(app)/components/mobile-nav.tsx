@@ -40,10 +40,12 @@ const LogoMark = () => (
 
 export default function MobileNav({
   isActive,
+  showDashboard,
   email,
   initial,
 }: {
   isActive: boolean
+  showDashboard: boolean
   email: string
   initial: string
 }) {
@@ -79,11 +81,11 @@ export default function MobileNav({
             Workspace
           </div>
           <nav className="flex flex-col gap-px" onClick={() => setOpen(false)}>
+            {showDashboard && (
+              <NavItem href="/dashboard" icon={<DashIcon />}>Dashboard</NavItem>
+            )}
             {isActive && (
-              <>
-                <NavItem href="/dashboard" icon={<DashIcon />}>Dashboard</NavItem>
-                <NavItem href="/settings" icon={<CogIcon />}>Settings</NavItem>
-              </>
+              <NavItem href="/settings" icon={<CogIcon />}>Settings</NavItem>
             )}
             <NavItem href="/billing" icon={<CardIcon />}>Billing</NavItem>
           </nav>

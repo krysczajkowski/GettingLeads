@@ -48,10 +48,12 @@ export default function ScheduleForm({
   initialHour,
   initialTimezone,
   initialDays,
+  onSuccessHref,
 }: {
   initialHour: number
   initialTimezone: string
   initialDays: string
+  onSuccessHref?: string
 }) {
   const [days, setDays] = useState<Set<number>>(() => parseDays(initialDays))
   const [hour, setHour] = useState(initialHour)
@@ -104,6 +106,11 @@ export default function ScheduleForm({
     if (!res.ok) {
       setError('Failed to save schedule. Please try again.')
       setSaving(false)
+      return
+    }
+
+    if (onSuccessHref) {
+      router.push(onSuccessHref)
       return
     }
 

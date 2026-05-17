@@ -8,10 +8,12 @@ export default function BrandForm({
   initialName,
   initialOffer,
   initialTargetPosts,
+  onSuccessHref,
 }: {
   initialName: string
   initialOffer: string
   initialTargetPosts: string
+  onSuccessHref?: string
 }) {
   const [brandName, setBrandName] = useState(initialName)
   const [offer, setOffer] = useState(initialOffer)
@@ -50,6 +52,11 @@ export default function BrandForm({
     if (updateError) {
       setError('Failed to save brand settings. Please try again.')
       setSaving(false)
+      return
+    }
+
+    if (onSuccessHref) {
+      router.push(onSuccessHref)
       return
     }
 
