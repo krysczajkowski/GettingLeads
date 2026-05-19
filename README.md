@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GettingLeads
 
-## Getting Started
+A multi-tenant SaaS that monitors Facebook groups and surfaces relevant leads using AI classification.
 
-First, run the development server:
+## What it does
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Users configure which Facebook groups to monitor, describe their offer, and set a daily scrape schedule. The system automatically scrapes those groups, classifies posts with GPT, and presents matching leads in a dashboard — without storing any post content (GDPR compliant).
+
+## Stack
+
+- **Next.js** — web app (landing page, auth, dashboard, settings, billing)
+- **Supabase** — database, authentication, row-level security
+- **Azure Functions** — background scraping pipeline (separate project in `azure-scraper/`)
+- **BrightData** — Facebook group scraping API
+- **OpenAI GPT** — lead classification
+- **Stripe** — subscriptions and billing
+
+## How the scraping pipeline works
+
+A timer function runs every 5 minutes, checks which users are due for a scrape, and puts one message per user into an **Azure Storage Queue**. A queue-triggered worker picks up each message and runs the full pipeline: scrape via BrightData → filter posts → classify with GPT → save leads to Supabase.
+
+```
+Scheduler (every 5 min)
+        ↓
+Azure Storage Queue
+        ↓
+     Worker
+     ↙    ↘
+BrightData  OpenAI
+     ↘    ↙
+    Supabase
+        ↓
+    Dashboard
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Project structure
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+/                  Next.js app (frontend + API routes)
+azure-scraper/     Azure Functions scraping pipeline (separate TS project)
+supabase/          Database migrations
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Local development
 
-## Learn More
+### Next.js app
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Required env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_APP_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Azure Functions (`azure-scraper/`)
 
-## Deploy on Vercel
+```bash
+npx azurite --silent --location .azurite  # start local queue emulator
+npm run start
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Secrets go in `azure-scraper/local.settings.json` (gitignored).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Database
+
+Run `supabase/migration.sql` in the Supabase SQL Editor before starting the app — tables are not auto-created.
