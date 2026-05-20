@@ -44,16 +44,11 @@ async function scheduler(timer: Timer, context: InvocationContext): Promise<void
       now,
     )
 
-    if (!nextScrapeAt) {
-      context.log(`Scheduler: user ${user.userId} skipped — paused (no days selected)`)
-      continue
-    }
-
     const { data: updated } = await supabase
       .from('profiles')
       .update({
         scrape_lock_until: lockUntil,
-        next_scrape_at: nextScrapeAt.toISOString(),
+        next_scrape_at: nextScrapeAt ? nextScrapeAt.toISOString() : null,
       })
       .eq('id', user.userId)
       .or(`scrape_lock_until.is.null,scrape_lock_until.lt.${now.toISOString()}`)
