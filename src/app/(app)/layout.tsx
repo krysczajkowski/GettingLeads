@@ -30,6 +30,12 @@ const CardIcon = () => (
   </svg>
 )
 
+const UserIcon = () => (
+  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>
+  </svg>
+)
+
 const LogoMark = () => (
   <svg width={22} height={22} viewBox="0 0 32 32" fill="none">
     <circle cx="16" cy="16" r="13.5" stroke="#15B36C" strokeWidth="1.6" opacity="0.25"/>
@@ -90,6 +96,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <NavItem href="/settings" icon={<CogIcon />}>Settings</NavItem>
           )}
           <NavItem href="/billing" icon={<CardIcon />}>Billing</NavItem>
+          <NavItem href="/account" icon={<UserIcon />}>Account</NavItem>
         </nav>
 
         {/* Live monitoring pill */}

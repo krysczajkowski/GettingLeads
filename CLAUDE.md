@@ -17,7 +17,7 @@
 - Client Components: `createClient()` from `@/lib/supabase/client` (singleton)
 - Admin/webhook: `createAdminClient()` from `@/lib/supabase/admin` (service role, bypasses RLS)
 - API routes that write sensitive profile fields (stripe_customer_id, subscription_status) must use `createAdminClient()` — RLS blocks these writes via the server client
-- Rate limiting: `rateLimit(key, maxRequests, windowMs)` from `@/lib/rate-limit.ts` — in-memory, used on Stripe API routes
+- Rate limiting: `rateLimit(key, maxRequests, windowMs)` from `@/lib/rate-limit.ts` — in-memory, used on Stripe and account API routes
 - Mutations: Client Components calling browser Supabase client directly (no Server Actions), except schedule updates which use `POST /api/schedule` (server-side computation of `next_scrape_at`)
 - Manual scrape: `POST /api/scrape-now` sets `next_scrape_at = now()` so scheduler picks it up; `GET /api/scrape-now` returns lock status for polling; rate limited to 1 per 15 min per user
 - `scrape-now-button.tsx` uses phase state machine (idle → queued → scraping → done) with 5s poll interval on lock status
@@ -28,6 +28,7 @@
 - Proxy (`src/proxy.ts`): uses `getClaims()` for local JWT verification (no network call); `getUser()` is only in Server Components
 - `@supabase/ssr` v0.10.3+: `setAll(cookiesToSet, headers)` — second `headers` param must be forwarded to response in proxy, ignored in server client
 - Subscription gate: `canAccessApp(status)` from `@/lib/subscription.ts` — returns true for `'active'` and `'trialing'`; used in `(app)/layout.tsx` (nav visibility + trial expiry flip) and per-page in dashboard/settings
+- `/account` page intentionally has NO subscription gate — GDPR rights (data export, account deletion) must remain accessible regardless of subscription status
 - Onboarding gate: `brand_name` being null = onboarding incomplete; dashboard redirects to `/onboarding`; layout hides Dashboard nav link until `brand_name` is set (prevents `<Link>` prefetch redirect loop)
 - Form components (`brand-form.tsx`, `schedule-form.tsx`) accept optional `onSuccessHref?: string` — when provided, `router.push()` to that URL on save instead of showing "Saved" flash; used by onboarding, ignored by settings
 - Trial expiry auto-flip lives in `(app)/layout.tsx` only — uses `createAdminClient()` with `.eq('subscription_status', 'trialing')` guard to avoid overwriting Stripe webhook writes
@@ -53,6 +54,7 @@
 - Post content and author data must NEVER be stored (DB, logs, cache, error messages)
 - Allowed to store: post_url, source_url, score, category, reason_code, content_hash, detected_at, expires_at
 - Content exists only in local variables during processing, discarded immediately after use
+- Account deletion: `admin.auth.admin.deleteUser()` cascades through `auth.users → profiles → groups, leads, usage, scrape_logs`; Stripe subscription must be canceled BEFORE deleting the user (otherwise the subscription keeps billing with no user to dispute)
 - See `gdpr_rules.md` for full rules — these are non-negotiable constraints
 
 ## Gotchas
@@ -77,6 +79,7 @@
 - Settings page (`/settings`) Supabase `select` must match actual DB columns — a missing column returns null profile, which triggers the subscription gate redirect to `/billing`
 - Never show Supabase `error.message` to users in Client Components — use generic error strings (GDPR)
 - Never log raw Supabase `error.message` server-side either — log `error.code` only
+- Don't interpolate Stripe SDK error `.message` in logs either — can contain customer email/name
 - Signup duplicate-email: we chose explicit UX over anti-enumeration — show "account already exists" when Supabase returns empty `identities` array (deliberate tradeoff: B2B SaaS where UX matters more than hiding registrations)
 - Security headers (X-Frame-Options, HSTS, etc.) are configured in `next.config.ts` `headers()` — don't remove
 - `tsc` doesn't delete stale files from `dist/` — always `rm -rf dist` before building azure-scraper (the `prebuild` script handles this)
