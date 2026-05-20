@@ -11,7 +11,7 @@
 - `src/app/components/nav.tsx` is the only client component in the landing page shell (hamburger menu state)
 - App shell (`(app)/layout.tsx`) is responsive — sidebar hidden below `md:`, mobile top bar nav via `(app)/components/mobile-nav.tsx`
 - App shell breakpoint strategy differs from landing page: sidebar (232px) reduces content width, so dashboard dense layouts (stat grid, table columns) use `xl:` (1280px) not `md:`
-- Auth pages (`(auth)/login`, `(auth)/signup`) use split-screen layout — form left, branded aside right; shared components `auth-aside.tsx` and `auth-icons.tsx` live in `(auth)/`; breakpoint is `min-[961px]` (960px), different from both landing and dashboard
+- Auth pages (`(auth)/login`, `(auth)/signup`, `(auth)/forgot-password`, `(auth)/reset-password`) use split-screen layout — form left, branded aside right; shared components `auth-aside.tsx`, `auth-icons.tsx`, and `strength-meter.tsx` live in `(auth)/`; breakpoint is `min-[961px]` (960px), different from both landing and dashboard
 - Custom checkbox checkmark (`.auth-check-input` in `globals.css`) needed because Tailwind `appearance-none` removes native checkbox styling — can't do the `:checked::after` pseudo-element with utility classes alone
 - Server Components: `await createClient()` from `@/lib/supabase/server`
 - Client Components: `createClient()` from `@/lib/supabase/client` (singleton)
@@ -19,6 +19,11 @@
 - API routes that write sensitive profile fields (stripe_customer_id, subscription_status) must use `createAdminClient()` — RLS blocks these writes via the server client
 - Rate limiting: `rateLimit(key, maxRequests, windowMs)` from `@/lib/rate-limit.ts` — in-memory, used on Stripe API routes
 - Mutations: Client Components calling browser Supabase client directly (no Server Actions), except schedule updates which use `POST /api/schedule` (server-side computation of `next_scrape_at`)
+- Manual scrape: `POST /api/scrape-now` sets `next_scrape_at = now()` so scheduler picks it up; `GET /api/scrape-now` returns lock status for polling; rate limited to 1 per 15 min per user
+- `scrape-now-button.tsx` uses phase state machine (idle → queued → scraping → done) with 5s poll interval on lock status
+- Forgot password uses a two-step pattern: client calls `POST /api/auth/forgot-password` (rate-limited by IP) first, then calls `supabase.auth.resetPasswordForEmail` only if rate check passes
+- Password reset flow: `resetPasswordForEmail` → `/callback?next=/reset-password` → callback route reads `next` param and redirects; only `/reset-password` is allowed as `next` value (prevent open redirect)
+- Supabase auth `emailRedirectTo` must use `process.env.NEXT_PUBLIC_APP_URL`, not `window.location.origin` — origin can be spoofed in emails
 - Auth guard pattern: `supabase.auth.getUser()` → redirect if no user (per-page, and also in layout as defense-in-depth)
 - Proxy (`src/proxy.ts`): uses `getClaims()` for local JWT verification (no network call); `getUser()` is only in Server Components
 - `@supabase/ssr` v0.10.3+: `setAll(cookiesToSet, headers)` — second `headers` param must be forwarded to response in proxy, ignored in server client
@@ -76,3 +81,5 @@
 - Security headers (X-Frame-Options, HSTS, etc.) are configured in `next.config.ts` `headers()` — don't remove
 - `tsc` doesn't delete stale files from `dist/` — always `rm -rf dist` before building azure-scraper (the `prebuild` script handles this)
 - When adding new protected routes under `(app)/`, also add them to `isProtectedRoute` in `proxy.ts` — otherwise unauthenticated users won't be redirected to `/login`
+- When adding new auth routes under `(auth)/`, also add them to `isAuthRoute` in `proxy.ts` — otherwise authenticated users won't be redirected away from the auth page
+- `supabase/migration.sql` section 11 adds `protect_subscription_fields` trigger — silently reverts `subscription_status`, `subscription_id`, `stripe_customer_id`, `trial_ends_at`, `trial_posts_used`, `email` on non-service_role updates
