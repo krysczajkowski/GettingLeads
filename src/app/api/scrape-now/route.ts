@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rate-limit'
-import { TRIAL_POST_CAP } from '@/lib/subscription'
+import { canAccessApp, TRIAL_POST_CAP } from '@/lib/subscription'
 import type { Profile } from '@/lib/types'
 
 export async function POST() {
@@ -27,6 +27,10 @@ export async function POST() {
 
   if (!profile) {
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
+  }
+
+  if (!canAccessApp(profile.subscription_status)) {
+    return NextResponse.json({ error: 'not_subscribed' }, { status: 403 })
   }
 
   if (profile.scrape_lock_until && new Date(profile.scrape_lock_until) > new Date()) {

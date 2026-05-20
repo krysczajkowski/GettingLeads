@@ -231,3 +231,28 @@ drop index if exists idx_profiles_next_scrape;
 create index idx_profiles_next_scrape
   on public.profiles (next_scrape_at)
   where subscription_status in ('active', 'trialing');
+
+-- ============================================================
+-- 11. Protect sensitive profile fields from client-side writes
+-- ============================================================
+-- Silently reverts subscription/billing columns when the caller is NOT
+-- service_role (i.e. anon or authenticated). The admin client used by
+-- webhooks and server-side code bypasses this trigger.
+create or replace function public.protect_subscription_fields()
+returns trigger as $$
+begin
+  NEW.subscription_status    := OLD.subscription_status;
+  NEW.subscription_id        := OLD.subscription_id;
+  NEW.stripe_customer_id     := OLD.stripe_customer_id;
+  NEW.trial_ends_at          := OLD.trial_ends_at;
+  NEW.trial_posts_used       := OLD.trial_posts_used;
+  NEW.email                  := OLD.email;
+  return NEW;
+end;
+$$ language plpgsql;
+
+create trigger protect_subscription_fields_trigger
+  before update on public.profiles
+  for each row
+  when (current_setting('role') != 'service_role')
+  execute function public.protect_subscription_fields();
