@@ -25,6 +25,7 @@
 - Password reset flow: `resetPasswordForEmail` → `/callback?next=/reset-password` → callback route reads `next` param and redirects; only `/reset-password` is allowed as `next` value (prevent open redirect)
 - Supabase auth `emailRedirectTo` must use `process.env.NEXT_PUBLIC_APP_URL`, not `window.location.origin` — origin can be spoofed in emails
 - Auth guard pattern: `supabase.auth.getUser()` → redirect if no user (per-page, and also in layout as defense-in-depth)
+- Transactional emails (signup confirmation, password reset) sent via Resend SMTP — configured in Supabase Dashboard (Authentication → SMTP Settings), templates editable in Authentication → Email Templates
 - Proxy (`src/proxy.ts`): uses `getClaims()` for local JWT verification (no network call); `getUser()` is only in Server Components
 - `@supabase/ssr` v0.10.3+: `setAll(cookiesToSet, headers)` — second `headers` param must be forwarded to response in proxy, ignored in server client
 - Subscription gate: `canAccessApp(status)` from `@/lib/subscription.ts` — returns true for `'active'` and `'trialing'`; used in `(app)/layout.tsx` (nav visibility + trial expiry flip) and per-page in dashboard/settings
